@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ES2024",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    // exports が src を直接指す「ソース消費」パッケージなので dist は出さない。
+    // バンドラ（Vite / wrangler）が TypeScript のまま取り込む。
+    "noEmit": true
+  },
+  "include": ["src"]
+}

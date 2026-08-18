@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2024",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "noEmit": true,
+    // AppType が D1Database / R2Bucket を参照するため Workers の ambient 型が要る
+    "types": ["@cloudflare/workers-types"],
+    "paths": {
+      "@repo/server": ["../../apps/server/src/index.ts"],
+      "@repo/schema": ["../schema/src"]
+    }
+  },
+  "include": ["src"]
+}

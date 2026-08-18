@@ -1,0 +1,46 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "tui",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": ["dist/**"]
+    },
+    // packages/* はソース消費（build スクリプトを持たない）なので、web の build に
+    // 先行タスクは無い。^build を外しておかないと
+    // web -> api-client -> server -> web の循環になる。
+    "@repo/web#build": {
+      "dependsOn": [],
+      "outputs": ["dist/**"]
+    },
+    // server の wrangler.jsonc は assets.directory に ../web/dist を指定しているので、
+    // web のビルドが先に終わっていないと build も deploy も落ちる。
+    // 依存グラフ上は server -> web の依存が無いため、ここで明示する。
+    "@repo/server#build": {
+      "dependsOn": ["@repo/web#build"],
+      "outputs": ["dist/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "storybook": {
+      "cache": false,
+      "persistent": true
+    },
+    "build-storybook": {
+      "dependsOn": [],
+      "outputs": ["storybook-static/**"]
+    },
+    "lint": {
+      "dependsOn": ["^lint"]
+    },
+    "typecheck": {
+      "dependsOn": ["^typecheck"]
+    },
+    "test": {
+      "dependsOn": ["^build"]
+    }
+  }
+}

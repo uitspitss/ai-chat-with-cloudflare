@@ -1,0 +1,20 @@
+pre-commit:
+  commands:
+    lint:
+      glob: "*.{ts,tsx,js,jsx}"
+      run: na exec oxlint --fix {staged_files}
+      stage_fixed: true
+    format:
+      # oxfmt は JSON も整形する。`nr format:check` は `oxfmt .` なので、
+      # ここを絞ると package.json の差分が pre-commit をすり抜けて CI で落ちる
+      # （lint 側は oxlint なので JSON を渡さない）
+      glob: "*.{ts,tsx,js,jsx,json,jsonc}"
+      run: na exec oxfmt {staged_files}
+      stage_fixed: true
+    typecheck:
+      run: nr typecheck
+
+pre-push:
+  commands:
+    knip:
+      run: nr knip

@@ -1,0 +1,51 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "e2e"
+
+managePackageManagerVersions: false
+
+# サプライチェーン対策
+trustPolicy: no-downgrade
+trustPolicyExclude:
+  # provenance が存在しない時代の 6.x 系。後発の 7.x に provenance が付いたため
+  # 「トラスト降格」と判定されるが実体は据え置きの旧メジャー（@babel/core 経由）
+  - "semver@6.3.1"
+  # 同上（expo-device 経由）。2021 年の改竄版は 0.7.29 / 0.8.0 / 1.0.0 で、これは別物
+  - "ua-parser-js@0.7.41 || 1.0.41"
+blockExoticSubdeps: true
+# 公開直後の版を掴みたくない場合は有効にする（分単位 / 7 日）。
+# ただし本リポジトリは「常に最新版を固定する」方針なので既定では無効。
+# 有効にすると `ni <pkg>` が書く `^<latest>` の下限を満たすバージョンが
+# 存在せず install が失敗する（範囲を手で緩める運用とセット）。
+# minimumReleaseAge: 10080
+
+allowBuilds:
+  esbuild: true
+  sharp: true
+  lefthook: true
+  workerd: true
+  msgpackr-extract: true
+  # drizzle-kit の推移依存。ポリフィル提供のみでネイティブ build は不要
+  core-js-pure: false
+
+catalog:
+  "@dotenvx/dotenvx": ^2.21.0
+  # 揃えないとブラウザバイナリが 2 世代入る（setup-dev:e2e）
+  "@playwright/test": ^1.62.1
+  playwright: ^1.62.1
+  agents: ^0.20.1
+  # pnpm 11 は既定で公開 24 時間以内の版を弾く。^7.0.0 にして解決を pnpm に任せる
+  ai: ^7.0.62
+  "@cloudflare/ai-chat": ^0.10.1
+  hono: ^4.13.1
+  knip: ^6.32.2
+  lefthook: ^2.1.10
+  oxfmt: ^0.63.0
+  oxlint: ^1.78.0
+  turbo: ^2.10.9
+  typescript: ^7.0.2
+  zod: ^4.4.3
+  drizzle-orm: ^0.45.2
+  react: ^19.2.8
+  react-dom: ^19.2.8

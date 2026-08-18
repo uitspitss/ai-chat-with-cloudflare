@@ -1,0 +1,42 @@
+{
+  "$schema": "https://unpkg.com/knip@latest/schema.json",
+  "rules": {
+    "devDependencies": "warn",
+    "exports": "warn",
+  },
+  "workspaces": {
+    "apps/server": {
+      "project": ["src/**/*.ts", "scripts/**/*.ts"],
+    },
+    "apps/web": {
+      "project": ["src/**/*.{ts,tsx}", ".storybook/**/*.{ts,tsx}"],
+      // styles.css の @import は CSS 側なので knip から追えない
+      // （tailwindcss / tw-animate-css / shadcn/tailwind.css / @fontsource-variable/geist）
+      "ignoreDependencies": [
+        "tailwindcss",
+        "tw-animate-css",
+        "shadcn",
+        "@fontsource-variable/geist",
+      ],
+    },
+    "apps/mobile": {
+      "project": ["src/**/*.{ts,tsx}"],
+      "entry": ["src/app/**/*.tsx", "src/lib/**/*.ts"],
+      // app.json 由来で knip が要求するが、CNG では expo が面倒を見る
+      "ignoreDependencies": ["expo-updates"],
+    },
+    "packages/schema": {},
+    "packages/api-client": {},
+    "e2e": {
+      "project": ["**/*.ts"],
+      // Playwright プラグインの既定 entry は *.spec.ts だけで *.setup.ts を含まない。
+      // 足さないと auth.setup.ts が「未使用ファイル」として並ぶ。
+      "playwright": {
+        "config": ["playwright.config.ts"],
+        "entry": ["**/*.{spec,setup}.ts"],
+      },
+      // fixtures はテストからしか使われないので未使用 export に見える
+      "ignoreExportsUsedInFile": true,
+    },
+  },
+}

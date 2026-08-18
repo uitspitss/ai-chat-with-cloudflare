@@ -1,0 +1,23 @@
+name: React Doctor
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+  statuses: write
+
+jobs:
+  react-doctor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # 既定の fetch-depth: 1 だと base に到達できず scope: changed が退化する
+          fetch-depth: 0
+      - uses: millionco/react-doctor@v2
+        continue-on-error: true
+        with:
+          directory: apps/web
+          blocking: none

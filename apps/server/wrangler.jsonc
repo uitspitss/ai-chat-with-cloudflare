@@ -1,0 +1,53 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ai-chat-with-cloudflare",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+
+  // dev 既定値。本番は `wrangler deploy` 前に上書きする（README 参照）。
+  // BETTER_AUTH_SECRET は秘密なのでここには置かない（.dev.vars / wrangler secret）。
+  "vars": {
+    "BETTER_AUTH_URL": "http://localhost:5173",
+    "TRUSTED_ORIGINS": "http://localhost:5173,http://localhost:8787",
+  },
+
+  "ai": { "binding": "AI" },
+
+  "durable_objects": {
+    "bindings": [{ "name": "ChatAgent", "class_name": "ChatAgent" }],
+  },
+  // AIChatAgent はメッセージ永続化とストリームバッファに SQLite を使うので必須。
+  // 既存の tag は絶対に書き換えず、変更時は新しい tag を追加する。
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["ChatAgent"] }],
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "ai-chat-with-cloudflare-db",
+      "database_id": "YOUR_DATABASE_ID",
+      "migrations_dir": "drizzle/migrations",
+    },
+  ],
+
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "ai-chat-with-cloudflare-files",
+    },
+  ],
+
+  // 本番は web のビルド成果物を同じ Worker から配信する。
+  // /api/* と /agents/*（WebSocket 含む）だけ Worker を先に通す。
+  //
+  // **dev ではこのディレクトリは空でよい。** SPA は Vite（:5173）が配り、
+  // wrangler は /api と /agents しか見ないため。ただし wrangler は存在しない
+  // ディレクトリを指されると起動前に落ちるので、dev スクリプトが mkdir している
+  // （クリーンチェックアウトで `nr dev` が動かなくなるのを防ぐ）。
+  "assets": {
+    "directory": "../web/dist",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/agents/*"],
+  },
+}

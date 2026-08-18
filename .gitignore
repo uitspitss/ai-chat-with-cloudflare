@@ -1,0 +1,34 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.DS_Store
+.playwright-mcp/
+.claude/*.log
+.claude/sessions/
+.claude/settings.local.json
+.claude/team-state.md
+
+# monorepo
+.wrangler/
+.turbo/
+
+# expo
+.expo/
+apps/mobile/expo-env.d.ts
+
+# wrangler のローカルシークレット。秘密はリポジトリに置かない
+# （secrets:pull の中間ファイル .dev.vars.tmp も含めるので * を付ける）
+.dev.vars*
+.env
+.env.*
+
+# Playwright
+# monorepo ではスラッシュを含むパターンが .gitignore の位置起点になるので **/ を付ける
+test-results/
+playwright-report/
+blob-report/
+**/playwright/.cache/
+**/e2e/.auth/
+
+*storybook.log
+storybook-static

@@ -1,0 +1,52 @@
+{
+  "name": "@repo/server",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "dev": "mkdir -p ../web/dist && wrangler dev",
+    "build": "wrangler deploy --dry-run --outdir dist",
+    "deploy": "wrangler deploy",
+    "lint": "oxlint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "node scripts/seed.ts",
+    "secrets:pull": "dotenvx decrypt -f dev-secrets.enc --stdout > .dev.vars.tmp && mv .dev.vars.tmp .dev.vars",
+    "secrets:push": "dotenvx encrypt -f dev-secrets.enc"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.38",
+    "@better-auth/drizzle-adapter": "^1.6.27",
+    "@cloudflare/ai-chat": "catalog:",
+    "@hono/zod-validator": "^0.9.0",
+    "@repo/schema": "workspace:*",
+    "agents": "catalog:",
+    "ai": "catalog:",
+    "better-auth": "^1.6.27",
+    "drizzle-orm": "catalog:",
+    "hono": "catalog:",
+    "neverthrow": "^8.2.0",
+    "ts-pattern": "^5.9.0",
+    "workers-ai-provider": "^4.0.0",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@ai-sdk/provider": "^4.0.7",
+    "@cloudflare/workers-types": "^5.20260811.1",
+    "@dotenvx/dotenvx": "catalog:",
+    "@types/node": "^26.2.0",
+    "drizzle-kit": "^0.31.10",
+    "vitest": "^4.1.10",
+    "wrangler": "^4.121.0"
+  }
+}
