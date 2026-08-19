@@ -12,6 +12,13 @@ jobs:
       - uses: actions/checkout@v7
       - uses: jdx/mise-action@v2
       - run: nci
+      # @repo/web の vitest は storybook プロジェクトを browser mode
+      # （@vitest/browser-playwright）で回すので、e2e ジョブとは別にここでも
+      # chromium が要る。入れ忘れると `nr test` が @repo/web#test で
+      # 「Executable doesn't exist」で落ちる。
+      - name: Install Playwright browser
+        working-directory: apps/web
+        run: na exec playwright install --with-deps chromium
       - run: nr lint
       - run: nr format:check
       - run: nr typecheck
