@@ -22,11 +22,15 @@
   // 既存の tag は絶対に書き換えず、変更時は新しい tag を追加する。
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["ChatAgent"] }],
 
+  // `wrangler d1 create` / `r2 bucket create` は binding を**追記**する。
+  // 生成された ai_chat_with_cloudflare_db / _files は DB / BUCKET と同じ実体を
+  // 指す重複なので消してある。id だけを既存の binding に入れること
+  // （消し忘れると同じ D1 に 2 つの binding が張られ、片方は migrations_dir 無しになる）。
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "ai-chat-with-cloudflare-db",
-      "database_id": "YOUR_DATABASE_ID",
+      "database_id": "06311c27-c6bd-41a8-886b-bd6282fda916",
       "migrations_dir": "drizzle/migrations",
     },
   ],
