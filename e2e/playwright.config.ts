@@ -52,6 +52,13 @@ export default defineConfig({
       `pnpm --filter @repo/server exec wrangler d1 migrations apply DB --local --persist-to ${STATE_DIR}`,
       [
         "pnpm --filter @repo/server exec wrangler dev",
+        // **--local は必須。** Workers AI にはローカル実装が無いので、既定では
+        // wrangler が起動時に AI binding のリモートプロキシを張りに行き、
+        // 非対話環境では CLOUDFLARE_API_TOKEN が無いと起動そのものが失敗する
+        // （CI がここで落ちていた）。--local は全 binding をローカルに倒し、
+        // env.AI を "not supported" にする。E2E_FAKE_LLM=1 のとき env.AI は
+        // 参照されないので、これで困らない。
+        "--local",
         `--port ${PORT}`,
         `--persist-to ${STATE_DIR}`,
         `--var BETTER_AUTH_URL:${BASE_URL}`,

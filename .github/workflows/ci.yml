@@ -12,6 +12,18 @@ jobs:
       - uses: actions/checkout@v7
       - uses: jdx/mise-action@v2
       - run: nci
+      # @repo/web の vitest は storybook プロジェクトを browser mode
+      # （@vitest/browser-playwright）で回すので、e2e ジョブとは別にここでも
+      # chromium が要る。入れ忘れると `nr test` が @repo/web#test で
+      # 「Executable doesn't exist」で落ちる。
+      #
+      # **--with-deps を付けない。** ubuntu-latest には chromium の共有ライブラリが
+      # 既に入っている一方、--with-deps は apt-get update を走らせる。
+      # azure.archive.ubuntu.com が応答せず、ci で 13 分・e2e で 11 分ハングして
+      # ジョブがキャンセルされた実績がある。**両ジョブとも付けないこと。**
+      - name: Install Playwright browser
+        working-directory: apps/web
+        run: na exec playwright install chromium
       - run: nr lint
       - run: nr format:check
       - run: nr typecheck
@@ -29,9 +41,13 @@ jobs:
       - uses: actions/checkout@v7
       - uses: jdx/mise-action@v2
       - run: nci
+      # ci ジョブと同じ理由で --with-deps を付けない（そちらのコメント参照）。
+      # ここは Desktop Chrome（フル chromium）なので ci の headless shell より
+      # 必要な共有ライブラリが多いが、足りなければ数秒で「missing libraries」と
+      # 出る。11 分ハングして気づけないより速く落ちるほうがよい。
       - name: Install Playwright browser
         working-directory: e2e
-        run: na exec playwright install --with-deps chromium
+        run: na exec playwright install chromium
       # Better Auth の署名鍵。webServer が読む .dev.vars を用意する
       - name: Prepare dev vars
         run: echo "BETTER_AUTH_SECRET=$(openssl rand -base64 32)" > apps/server/.dev.vars
