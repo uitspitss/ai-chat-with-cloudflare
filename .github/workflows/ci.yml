@@ -16,9 +16,13 @@ jobs:
       # （@vitest/browser-playwright）で回すので、e2e ジョブとは別にここでも
       # chromium が要る。入れ忘れると `nr test` が @repo/web#test で
       # 「Executable doesn't exist」で落ちる。
+      #
+      # **--with-deps を付けない。** ubuntu-latest には chromium の共有ライブラリが
+      # 既に入っている一方、--with-deps は apt-get update を走らせる。実際に
+      # azure.archive.ubuntu.com が応答せず 13 分ハングしてジョブがキャンセルされた。
       - name: Install Playwright browser
         working-directory: apps/web
-        run: na exec playwright install --with-deps chromium
+        run: na exec playwright install chromium
       - run: nr lint
       - run: nr format:check
       - run: nr typecheck
