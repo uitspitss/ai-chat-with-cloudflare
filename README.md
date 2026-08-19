@@ -128,16 +128,25 @@ PUT する）は変わらない**ようにしてある。
 
 ## デプロイ
 
-```bash
-# 1. D1 を作る
-wrangler d1 create ai-chat-with-cloudflare-db
-# 出力された database_id を apps/server/wrangler.jsonc に設定する
+wrangler はグローバルに入れず `apps/server` の devDependency で固定してある。
+`na exec` 経由で呼び、**`apps/server` で実行する**（wrangler はカレントから
+`wrangler.jsonc` を探すので、ルートから叩くと設定なしで動いてしまう）。
 
-# 2. R2 バケットを作る
-wrangler r2 bucket create ai-chat-with-cloudflare-files
+```bash
+cd apps/server
+
+# 1. D1 を作る
+na exec wrangler d1 create ai-chat-with-cloudflare-db
+# 出力された database_id を wrangler.jsonc の **既存の DB binding** に入れる。
+# create は既存 binding を見ずに新しい binding を追記するので、生成された
+# ai_chat_with_cloudflare_db は消すこと（残すと同じ D1 に binding が 2 つ張られ、
+# 追記されたほうは migrations_dir を持たないためマイグレーションがずれる）
+
+# 2. R2 バケットを作る（1 と同様、追記された binding は消す）
+na exec wrangler r2 bucket create ai-chat-with-cloudflare-files
 
 # 3. 本番の秘密鍵を登録
-cd apps/server && wrangler secret put BETTER_AUTH_SECRET
+na exec wrangler secret put BETTER_AUTH_SECRET
 
 # 4. 本番オリジンを wrangler.jsonc の vars に反映
 #    BETTER_AUTH_URL / TRUSTED_ORIGINS を https://<本番ドメイン> に変える
@@ -148,7 +157,8 @@ cd apps/server && wrangler secret put BETTER_AUTH_SECRET
 #    （wrangler.jsonc だけ変えて配ると、全員のローカルのサインインが
 #     INVALID_ORIGIN で 403 になる。CI は --var を渡すので緑のまま気づけない）
 
-# 5. マイグレーション適用 -> ビルド -> デプロイ
+# 5. マイグレーション適用 -> ビルド -> デプロイ（ここからはリポジトリルートで）
+cd ../..
 na --filter @repo/server run db:migrate:remote
 na exec turbo run build --filter=@repo/server
 na --filter @repo/server run deploy
