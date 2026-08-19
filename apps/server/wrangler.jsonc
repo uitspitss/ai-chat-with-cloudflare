@@ -6,11 +6,13 @@
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
 
-  // dev 既定値。本番は `wrangler deploy` 前に上書きする（README 参照）。
+  // **ここは本番の値。** `wrangler deploy` は vars を本番へ上書きするので、
+  // dev の値を置くと本番が壊れる。ローカルは `.dev.vars` が vars を上書きするので
+  // これで困らない（`nr secrets:pull` で dev-secrets.enc から生成する）。
   // BETTER_AUTH_SECRET は秘密なのでここには置かない（.dev.vars / wrangler secret）。
   "vars": {
-    "BETTER_AUTH_URL": "http://localhost:5173",
-    "TRUSTED_ORIGINS": "http://localhost:5173,http://localhost:8787",
+    "BETTER_AUTH_URL": "https://ai-chat-with-cloudflare.u7s.workers.dev",
+    "TRUSTED_ORIGINS": "https://ai-chat-with-cloudflare.u7s.workers.dev",
   },
 
   "ai": { "binding": "AI" },
