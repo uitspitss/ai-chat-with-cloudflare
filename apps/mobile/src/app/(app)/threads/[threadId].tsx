@@ -1,6 +1,6 @@
 import { useAgentChat } from "@cloudflare/ai-chat/react";
 import { useAgent } from "agents/react";
-import { useLocalSearchParams } from "expo-router";
+import { Redirect, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -18,8 +18,21 @@ import { currentCookie } from "@/lib/auth";
 import { CookieWebSocket } from "@/lib/cookie-websocket";
 import { API_BASE_URL } from "@/lib/env";
 
+/**
+ * `useLocalSearchParams` は実行時に `string[]` や `undefined` を返しうる。型引数は
+ * それを隠すだけなので実際に確かめる。**確かめた結果でフックの数が変わらないよう**、
+ * ガードはここに置いて中身を別のコンポーネントに分けている。
+ */
 export default function ChatScreen() {
-  const { threadId } = useLocalSearchParams<{ threadId: string }>();
+  const params = useLocalSearchParams();
+  const threadId = typeof params.threadId === "string" ? params.threadId : null;
+
+  if (!threadId) return <Redirect href="/" />;
+
+  return <Chat threadId={threadId} />;
+}
+
+function Chat({ threadId }: { threadId: string }) {
   const [input, setInput] = useState("");
 
   // agent-per-thread: インスタンス名を threadId にすることで

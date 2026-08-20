@@ -19,10 +19,15 @@ type Picked = { uri: string; name: string; contentType: string };
  */
 function toUpload(threadId: string, picked: Picked) {
   const file = new File(picked.uri);
+
+  // **取れないときに 0 で代用しない。** 宣言サイズと実体がずれた状態で送ると
+  // サーバーが 413 を返し、原因が「壊れたファイル」に見えてしまう。
+  if (file.size == null) throw new Error("ファイルのサイズが取得できなかった");
+
   return appApi.uploadFile({
     threadId,
     name: picked.name,
-    size: file.size ?? 0,
+    size: file.size,
     contentType: picked.contentType,
     body: file,
   });

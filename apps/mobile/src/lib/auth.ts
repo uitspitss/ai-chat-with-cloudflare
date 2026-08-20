@@ -11,7 +11,7 @@ export const authClient = createAuthClient({
   plugins: [expoClient({ storage: SecureStore, scheme: "aichat" })],
 });
 
-export const { signIn, signUp, signOut, useSession } = authClient;
+export const { signIn, signUp, useSession } = authClient;
 
 /**
  * cookie の写し。**WebSocket のコンストラクタは `await` できない**ので、
@@ -32,6 +32,16 @@ export function refreshCookie(): string {
 }
 
 refreshCookie();
+
+/**
+ * **`authClient.signOut` を直に export しない。** 写しを捨てないと、サインアウト後も
+ * 古い cookie で WebSocket が繋がってしまう（画面はサインイン前に戻っているのに）。
+ * キャッシュの整合はこのファイルの中だけで完結させる。
+ */
+export async function signOut() {
+  await authClient.signOut();
+  refreshCookie();
+}
 
 // サーバー側の cookieCache は 5 分で切れる。アプリを長時間バックグラウンドに
 // 置いた後の復帰で古い cookie を掴まないよう、戻ってきたら読み直す。
