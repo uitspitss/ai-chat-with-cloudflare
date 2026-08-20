@@ -1,0 +1,80 @@
+# サインイン → スレッド作成 → メッセージ送信 → 応答表示。
+#
+# ここで検出したいのは**結線の失敗**（SecureStore の cookie が WebSocket に載るか、
+# Metro が workspace の依存を解決できるか、Agents SDK の DO に繋がるか）で、
+# 単体テストのモックでは絶対に出ない類のもの。
+#
+# LLM は E2E_FAKE_LLM=1 のダミー（e2e/scripts/serve.sh が渡す）。
+appId: com.anonymous.ai-chat
+env:
+  EMAIL: maestro@example.test
+  PASSWORD: maestro-password-1234
+---
+# **clearState では足りない。** SecureStore は iOS の Keychain を使うので、
+# アプリのデータを消してもセッション cookie が残り、次の flow がサインイン済みで始まる。
+- clearKeychain
+- launchApp:
+    clearState: true
+
+- assertVisible: "サインイン"
+- tapOn:
+    id: "auth-toggle-mode"
+- assertVisible: "アカウントを作る"
+- tapOn:
+    id: "name-input"
+- inputText: "Maestro User"
+- tapOn:
+    id: "email-input"
+- inputText: ${EMAIL}
+- tapOn:
+    id: "password-input"
+- inputText: ${PASSWORD}
+- hideKeyboard
+- tapOn:
+    id: "auth-submit"
+
+# サーバーを使い回すと D1 が残っていてユーザーが既にいる（既存の e2e/auth.setup.ts と
+# 同じ事情）。そのときはサインインに切り替えて出し直す。
+#
+# **`when:` は待たない**ので、先に「エラーが出るなら出るまで」待つ。
+# これが無いと React が描く前に判定してしまい、分岐が黙って飛ばされる。
+# 文言ではなく testID で見る（Better Auth のメッセージがそのまま出るので英語のこともある）。
+- extendedWaitUntil:
+    visible:
+      id: "auth-error"
+    timeout: 3000
+    optional: true
+- runFlow:
+    when:
+      visible:
+        id: "auth-error"
+    commands:
+      - tapOn:
+          id: "auth-toggle-mode"
+      - tapOn:
+          id: "auth-submit"
+
+# ガード（(app)/_layout.tsx）を抜けてスレッド一覧に入る
+- assertVisible: "スレッド"
+- tapOn:
+    id: "thread-title-input"
+- inputText: "Maestro のスレッド"
+- hideKeyboard
+- tapOn:
+    id: "create-thread"
+
+# 作成すると自動でチャット画面へ遷移する
+- assertVisible: "メッセージを入力"
+- tapOn:
+    id: "message-input"
+- inputText: "既知の問題を教えて"
+- hideKeyboard
+- tapOn:
+    id: "send-message"
+
+# 自分の発言が出る（WebSocket が張れている）
+- assertVisible: "既知の問題を教えて"
+# ダミーモデルの最終応答。ここまで出れば DO までの往復が通っている
+- extendedWaitUntil:
+    visible: "既知の問題は Safari でスクロール位置が復元されない点です。"
+    timeout: 30000

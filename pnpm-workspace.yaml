@@ -49,3 +49,13 @@ catalog:
   drizzle-orm: ^0.45.2
   react: ^19.2.8
   react-dom: ^19.2.8
+
+overrides:
+  # **1.30.1 に固定する。** react-native-css（NativeWind v5）は lightningcss の
+  # visitor で CSS の AST を往復させるが、1.32 / 1.33 では Tailwind v4 が出す
+  # preflight を読み戻せず
+  # 「failed to deserialize; expected an object-like struct named Specifier」で
+  # Metro の bundling が失敗する（1.30.1 では通ることを確認済み）。
+  # Expo が 1.33.0、@tailwindcss/postcss が 1.32.0 を引くので両方をここで揃える。
+  # NativeWind v5 が preview を抜けたら外せるか再確認すること。
+  lightningcss: 1.30.1

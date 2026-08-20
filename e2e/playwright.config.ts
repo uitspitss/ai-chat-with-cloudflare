@@ -9,13 +9,10 @@ import { defineConfig, devices } from "@playwright/test";
  * これがそのまま本番相当になる。
  */
 
-// 開発サーバー（wrangler 8787 / vite 5173）とずらす。
-// ずらさないと `nr dev` を上げたまま E2E を回したとき開発用 DB を壊す。
+// 起動手順そのものは e2e/scripts/serve.sh が持つ（Maestro も同じものを呼ぶ）。
+// ポートの既定値だけはここでも要る（Playwright が疎通を待つ URL に使う）。
 const PORT = 8788;
 const BASE_URL = `http://localhost:${PORT}`;
-
-// 開発用とは別の永続ディレクトリ。D1/R2/DO の状態がここに隔離される。
-const STATE_DIR = ".wrangler/e2e-state";
 
 export default defineConfig({
   testDir: ".",
@@ -44,30 +41,7 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: [
-      // web の dist が無いと wrangler が assets.directory を解決できずに落ちる
-      "pnpm --filter @repo/web run build",
-      // 毎回まっさらな D1 から始める。テストが自分でデータを作る前提にできる
-      `rm -rf apps/server/${STATE_DIR}`,
-      `pnpm --filter @repo/server exec wrangler d1 migrations apply DB --local --persist-to ${STATE_DIR}`,
-      [
-        "pnpm --filter @repo/server exec wrangler dev",
-        // **--local は必須。** Workers AI にはローカル実装が無いので、既定では
-        // wrangler が起動時に AI binding のリモートプロキシを張りに行き、
-        // 非対話環境では CLOUDFLARE_API_TOKEN が無いと起動そのものが失敗する
-        // （CI がここで落ちていた）。--local は全 binding をローカルに倒し、
-        // env.AI を "not supported" にする。E2E_FAKE_LLM=1 のとき env.AI は
-        // 参照されないので、これで困らない。
-        "--local",
-        `--port ${PORT}`,
-        `--persist-to ${STATE_DIR}`,
-        `--var BETTER_AUTH_URL:${BASE_URL}`,
-        `--var TRUSTED_ORIGINS:${BASE_URL}`,
-        // 実物の Workers AI はリモート接続でストリームが切れることがあるので、
-        // E2E は決定的なダミーモデルを使う（infrastructure/ai/fake-model.ts）
-        "--var E2E_FAKE_LLM:1",
-      ].join(" "),
-    ].join(" && "),
+    command: `E2E_PORT=${PORT} sh e2e/scripts/serve.sh`,
     cwd: "..",
     url: BASE_URL,
     // ローカルは既に上げてあるサーバーを使い回す。CI では必ず新しく起動する

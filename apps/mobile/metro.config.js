@@ -1,4 +1,5 @@
 const { getDefaultConfig } = require("expo/metro-config");
+const { withNativewind } = require("nativewind/metro");
 const path = require("node:path");
 
 const projectRoot = __dirname;
@@ -17,4 +18,7 @@ config.resolver.nodeModulesPaths = [
 // pnpm では false（＝既定のまま）でないと expo-router の deep 依存が解決できない。
 config.resolver.disableHierarchicalLookup = false;
 
-module.exports = config;
+// Tailwind v4 は Metro の transformer 越しに効く（babel の preset は要らない）。
+// globalClassNamePolyfill は既定で true なので、素の RN コンポーネントが
+// そのまま className を受け取る。
+module.exports = withNativewind(config);

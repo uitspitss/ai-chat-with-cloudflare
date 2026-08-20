@@ -67,6 +67,22 @@ WebSocket の `onBeforeConnect`・Vite の proxy といった**結線の失敗�
 - UI を変えたときは通ったことで満足しない。**長い日本語のスレッド名や大きい添付など
   現実的なデータを入れて、はみ出し・重なり・見切れをスクリーンショットで見る**
 
+サーバーの起動手順（web ビルド → D1 の作り直し → `wrangler dev` → ダミー LLM）は
+`e2e/scripts/serve.sh` が持つ。**Playwright も Maestro もこれを呼ぶ。**
+手順を書き足すときはここだけを直す（2 箇所に書くと片方だけ直して黙って乖離する）。
+
+### モバイルの E2E は Maestro（ローカル専用）
+
+`nr test:e2e:mobile`。**CI には入れていない**（macOS runner と 20 分級のネイティブ
+ビルドが毎 PR に乗るため）。CI 側は `nr build` の `expo export` が Metro /
+NativeWind の結線だけを見ている。
+
+- flow は `apps/mobile/.maestro/`。要素は `testID` で指す（文言を変えても壊れない）
+- **添付のアップロードだけは Maestro から API を直接叩いている。** iOS の
+  ドキュメントピッカーはアプリと別プロセスで、Maestro から確実に触れないため。
+  裏返すと **RN の `fetch` から R2 へ PUT する経路には自動テストが無い**ので、
+  添付まわりを触ったらシミュレータで実際に選んでアップロードすること
+
 ## 開発サーバー
 
 - `nr dev` で全アプリを同時起動
@@ -78,9 +94,11 @@ WebSocket の `onBeforeConnect`・Vite の proxy といった**結線の失敗�
 
 - `apps/server` - Hono + Agents SDK + Drizzle (Cloudflare Workers)
 - `apps/web` - Vite + React + TanStack Router (SPA)
-- `apps/mobile` - Expo（雛形のみ。画面は未実装）
+- `apps/mobile` - Expo（expo-router + NativeWind）。**iOS のみ保証**、Android は best-effort
 - `packages/schema` - zod スキーマ・共有型
 - `packages/api-client` - Hono RPC クライアントのファクトリ
+- `packages/app-api` - web / mobile が共有する API 呼び出し（素の async 関数 + queryKey）
+- `packages/design-tokens` - web / mobile が共有する CSS のトークン（生の値のみ）
 
 ## ファイル命名規則
 
@@ -230,6 +248,37 @@ grep -rn 'env\.BUCKET\|drizzle(' presentation/ index.ts                # 何も�
 - 認証テーブル（`user` / `session` / `account` / `verification`）は
   `apps/server/src/infrastructure/d1/auth-schema.ts`。Better Auth の既定名に合わせてあるので
   リネームしない
+
+## モバイル（Expo）
+
+ネイティブ側の認証は `apps/mobile/README.md` に、WebSocket に cookie を載せる判断は
+`docs/adr/0001-native-websocket-auth.md` にある。ここには**実際に踏んだ落とし穴**だけを置く。
+
+- **`className` が効くのは `react-native` のコンポーネントだけ。** NativeWind の
+  `globalClassNamePolyfill` は `react-native` の**解決を差し替える**仕組みなので、
+  サードパーティ（`react-native-safe-area-context` など）には効かない。しかも
+  エラーにならず**黙って無視される**ので、`flex-1` が付かず高さ 0 の空白画面になり、
+  原因が分からなくなる。`src/components/safe-area-view.tsx` のように
+  `useCssElement` で包む
+- **Hermes に `crypto` グローバルは無い。** AI SDK / Agents SDK が
+  `crypto.randomUUID()` を使うので、`src/lib/crypto-polyfill.ts` を
+  `_layout.tsx` の先頭で import する。型検査は通り、画面を開いた瞬間に落ちる
+- **ネイティブモジュール（`expo-*` の多く）を足したら再ビルドが要る。**
+  Metro のリロードでは入らず「Cannot find native module」で落ちる
+- **SecureStore は iOS の Keychain なので `clearState` では消えない。**
+  Maestro の flow は `clearKeychain` を先に置く（無いと 2 回目がサインイン済みで始まる）
+- **サインイン成功後の遷移は宣言的に書く。** `router.replace("/")` を呼ぶと
+  `useSession()` の更新より先に遷移してしまい、`(app)` のガードが「未認証」と
+  判断して押し戻す。ガードと同じストアを見て `<Redirect>` を返す
+
+### バージョンを `^` で入れてはいけないもの
+
+- **`better-auth` / `@better-auth/expo` は `~`。** `^1.6.30` は 1.7.0 を掴み、
+  1.7 は `account` テーブルに `issuer` 列を足すので、D1 のマイグレーション無しでは
+  サインアップが 500 になる。上げるときはスキーマ変更とセットで行う
+- **`lightningcss` は `pnpm-workspace.yaml` の `overrides` で 1.30.1 に固定。**
+  react-native-css（NativeWind v5）が 1.32 / 1.33 で Tailwind v4 の出力を読み戻せず、
+  Metro の bundling が「failed to deserialize ... Specifier」で落ちる
 
 ## テスト
 

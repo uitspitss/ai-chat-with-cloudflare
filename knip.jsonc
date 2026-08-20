@@ -17,16 +17,19 @@
         "tw-animate-css",
         "shadcn",
         "@fontsource-variable/geist",
+        "@repo/design-tokens",
       ],
     },
     "apps/mobile": {
       "project": ["src/**/*.{ts,tsx}"],
       "entry": ["src/app/**/*.tsx", "src/lib/**/*.ts"],
-      // app.json 由来で knip が要求するが、CNG では expo が面倒を見る
-      "ignoreDependencies": ["expo-updates"],
+      // app.json 由来で knip が要求するが、CNG では expo が面倒を見る。
+      // design-tokens は global.css の @import 経由なので knip から追えない。
+      "ignoreDependencies": ["expo-updates", "@repo/design-tokens"],
     },
     "packages/schema": {},
     "packages/api-client": {},
+    "packages/app-api": {},
     "e2e": {
       "project": ["**/*.ts"],
       // Playwright プラグインの既定 entry は *.spec.ts だけで *.setup.ts を含まない。

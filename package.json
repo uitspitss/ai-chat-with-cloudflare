@@ -14,7 +14,8 @@
     "test:e2e": "pnpm --filter @repo/e2e run test:e2e",
     "test:e2e:ui": "pnpm --filter @repo/e2e run test:e2e:ui",
     "storybook": "turbo run storybook",
-    "build-storybook": "turbo run build-storybook"
+    "build-storybook": "turbo run build-storybook",
+    "test:e2e:mobile": "pnpm --filter @repo/mobile run test:e2e"
   },
   "devDependencies": {
     "@playwright/test": "catalog:",

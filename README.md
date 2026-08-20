@@ -37,6 +37,30 @@ na --filter @repo/server run db:seed
 **必ず :5173 を見ること。** Vite の proxy が `/api` と `/agents`（WebSocket 含む）を
 :8787 の wrangler に流している。:8787 を直接開くと SPA が配信されない。
 
+### `nr dev` が Cloudflare Access で落ちるとき
+
+```
+✘ Failed to start the remote proxy session. ... Failed to authenticate with Cloudflare Access
+```
+
+**Workers AI にはローカル実装が無い。** そのため `wrangler dev` は起動時に必ず本物の
+AI へプロキシを張りに行き、そのプレビュー URL は `*.workers.dev` に立つ。Worker を
+Cloudflare Access で保護しているアカウントでは**このプレビュー URL も Access の配下**に
+入るので、認証を通していないと起動そのものが失敗する。D1・R2・Durable Object は
+miniflare にローカル実装があるので、**引っかかるのは AI binding だけ**。
+
+```bash
+brew install cloudflared
+cloudflared access login https://<your-worker>.workers.dev   # 一度だけ。~/.cloudflared/ に残る
+```
+
+Access を使っていない、あるいは Workers AI を使わなくてよいなら `--local` で全 binding を
+ローカルに倒せる（`env.AI` が "not supported" になるので LLM は下の節を見る）。
+
+```bash
+na --filter @repo/server exec wrangler dev --local
+```
+
 ## Available Scripts
 
 | コマンド | 説明 |
@@ -55,7 +79,7 @@ na --filter @repo/server run db:seed
 | `na --filter @repo/server run db:seed` | 開発用シード（要 `wrangler dev`） |
 | `na --filter @repo/server run db:studio` | Drizzle Studio |
 | `na --filter @repo/web run dev` | Web のみ起動 |
-| `na --filter @repo/mobile run ios` | iOS シミュレータ（雛形のみ） |
+| `na --filter @repo/mobile run ios` | iOS シミュレータ |
 
 ## Project Structure
 
@@ -90,24 +114,41 @@ na --filter @repo/server run db:seed
 │   │       ├── components/      # message-parts / thread-files
 │   │       ├── lib/             # api（Hono RPC）/ auth（Better Auth）
 │   │       └── routes/          # / , /sign-in , /threads/$threadId
-│   └── mobile/                  # Expo（雛形のみ。README を参照）
+│   └── mobile/                  # Expo + expo-router + NativeWind（iOS のみ保証）
+│       ├── .maestro/            # ネイティブ E2E の flow（ローカル専用）
+│       └── src/
+│           ├── app/             # (auth)/sign-in , (app)/index , (app)/threads/[threadId]
+│           ├── components/      # message-parts / thread-files / safe-area-view
+│           └── lib/             # api / auth / cookie-websocket / env
 ├── packages/
 │   ├── schema/                  # zod スキーマ・共有型
-│   └── api-client/              # createApiClient(baseUrl, fetchImpl?)
+│   ├── api-client/              # createApiClient(baseUrl, fetchImpl?)
+│   ├── app-api/                 # web / mobile 共有の API 呼び出し（素の async 関数）
+│   └── design-tokens/           # web / mobile 共有の CSS トークン
 ├── turbo.json
 ├── pnpm-workspace.yaml
 ├── .oxlintrc.json / .oxfmtrc.json / lefthook.yml / knip.jsonc
+├── .worktreeinclude             # worktree 間で複製する gitignore 済みファイル
 └── .config/wt.toml
 ```
 
 ## LLM プロバイダー
 
-既定は **Workers AI**（`@cf/zai-org/glm-4.7-flash`）。`wrangler dev` からローカルでも
-呼べるので、API キー無しで動く。`ANTHROPIC_API_KEY` を設定すると Anthropic に切り替わる。
+既定は **Workers AI**（`@cf/zai-org/glm-4.7-flash`）。`ANTHROPIC_API_KEY` を設定すると
+Anthropic に切り替わる。
 
 ```bash
 echo "ANTHROPIC_API_KEY=sk-ant-..." >> apps/server/.dev.vars
 ```
+
+| 設定 | 外に出る先 | 用途 |
+|---|---|---|
+| 既定（Workers AI） | Cloudflare（`wrangler dev` の remote proxy） | 本番と同じ経路で試す |
+| `ANTHROPIC_API_KEY` | Anthropic | `--local` でも本物のチャットが動く |
+| `E2E_FAKE_LLM=1` | **どこにも出ない** | UI いじり・E2E。決まった 1 往復を返すだけ |
+
+**Workers AI は `wrangler dev --local` では使えない**（`env.AI` が "not supported" になる）。
+`--local` で開発するなら上の 2 つのどちらかが要る。
 
 切り替えは `apps/server/src/infrastructure/ai/model.ts` の 1 ファイルに閉じている。
 
@@ -224,6 +265,19 @@ na --filter @repo/server run secrets:push   # 平文の行だけ暗号化され�
 **`secrets:pull` は `.dev.vars` を上書きする。** 手元だけの値を持たせたい場合は
 pull のあとに追記する（`nr dev` では自動実行しない）。
 
+### 新しい worktree
+
+復号鍵 `apps/server/.env.keys` は gitignore されているので、**worktree を切っただけでは
+付いてこない。** 無いまま `secrets:pull` を叩くと `could not decrypt` で落ちる。
+
+`.worktreeinclude` に挙げたファイルを `.config/wt.toml` の `pre-start` フックが
+main の worktree から複製する（worktrunk の `wt step copy-ignored`）。
+初回は worktrunk がコマンドの承認を求める。
+
+**`--require-include` を外さないこと。** 外すと `.worktreeinclude` が無いときに
+gitignore された全ファイルがコピーされ、`.turbo` / `dist` / `.wrangler` / `.expo` の
+ビルドキャッシュを古い worktree から持ち込んでしまう。
+
 一時ファイルに書いてから `mv` しているのは、**復号に失敗したときに既存の
 `.dev.vars` を壊さないため**。`> .dev.vars` と直接書くと、リダイレクトが
 コマンド実行前に truncate するので、鍵を持っていない人が pull しただけで
@@ -243,6 +297,6 @@ pull のあとに追記する（`nr dev` では自動実行しない）。
 | バックエンド | Hono + Drizzle ORM |
 | 認証 | Better Auth (email + password) |
 | フロントエンド | Vite + React + TanStack Router / Query + Tailwind CSS |
-| モバイル | Expo + expo-router（雛形のみ） |
+| モバイル | Expo + expo-router + NativeWind v5 + Better Auth Expo プラグイン |
 | モノレポ | pnpm workspaces + Turborepo |
 | ツール | mise / oxlint / oxfmt / lefthook / knip / dotenvx / worktrunk |

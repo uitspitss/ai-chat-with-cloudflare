@@ -1,0 +1,20 @@
+# `wt step copy-ignored --require-include` がコピーする対象。
+# 「gitignore されている **かつ** ここにマッチする」ものだけが複製される。
+#
+# 目的は「worktree を切った直後に `secrets:pull` と `nr dev` が通ること」。
+#
+# **ビルド生成物は入れない。** `.turbo` / `dist` / `.wrangler` / `.expo` を古い worktree から
+# 持ち込むとキャッシュ不整合を起こす。`node_modules` も入れていない（リンクは保たれるが、
+# pnpm はローカルストアからのハードリンクで数秒で入れ直せるので、数十万ファイルを
+# コピーするより `ni` の方が速い）。
+
+# dotenvx の復号鍵。これが無いと `secrets:pull` が
+# 「could not decrypt」で落ち、worktree ごとに手で持ってくる羽目になる
+apps/server/.env.keys
+
+# secrets:pull の生成物。あれば pull せずに `nr dev` が上がる。
+# dev-secrets.enc を更新したときは各 worktree で pull し直すこと
+apps/server/.dev.vars
+
+# Claude Code のローカル許可設定（マシン固有・コミットしない）
+.claude/settings.local.json

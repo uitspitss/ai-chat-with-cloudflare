@@ -1,0 +1,49 @@
+# 添付したファイルが一覧に出て、LLM がその中身を読めることを確かめる。
+#
+# 登録は API を直接叩く（.maestro/scripts/attach-file.js のコメント参照）。
+# chat.yaml が先に走ってユーザーを作っている前提だが、スクリプト側で
+# sign-up → sign-in に落ちるので単独でも動く。
+appId: com.anonymous.ai-chat
+env:
+  EMAIL: maestro@example.test
+  PASSWORD: maestro-password-1234
+---
+- runScript:
+    file: scripts/attach-file.js
+    env:
+      MAESTRO_API_URL: ${MAESTRO_API_URL}
+      MAESTRO_EMAIL: ${EMAIL}
+      MAESTRO_PASSWORD: ${PASSWORD}
+
+# **clearState では足りない。** SecureStore は iOS の Keychain を使うので、
+# アプリのデータを消してもセッション cookie が残り、次の flow がサインイン済みで始まる。
+- clearKeychain
+- launchApp:
+    clearState: true
+- assertVisible: "サインイン"
+- tapOn:
+    id: "email-input"
+- inputText: ${EMAIL}
+- tapOn:
+    id: "password-input"
+- inputText: ${PASSWORD}
+- hideKeyboard
+- tapOn:
+    id: "auth-submit"
+
+- tapOn: "添付のテスト"
+
+# 添付が一覧に出る（GET /api/files が Cookie ヘッダ付きで通っている）
+- assertVisible: "release-notes.md"
+
+# LLM が R2 から中身を読んで答える。ダミーモデルは 1 ステップ目で
+# readThreadFile を呼び、2 ステップ目でこの文章を返す
+- tapOn:
+    id: "message-input"
+- inputText: "既知の問題を教えて"
+- hideKeyboard
+- tapOn:
+    id: "send-message"
+- extendedWaitUntil:
+    visible: "既知の問題は Safari でスクロール位置が復元されない点です。"
+    timeout: 30000

@@ -12,7 +12,9 @@
   // BETTER_AUTH_SECRET は秘密なのでここには置かない（.dev.vars / wrangler secret）。
   "vars": {
     "BETTER_AUTH_URL": "https://ai-chat-with-cloudflare.u7s.workers.dev",
-    "TRUSTED_ORIGINS": "https://ai-chat-with-cloudflare.u7s.workers.dev",
+    // ネイティブアプリは deep link scheme（apps/mobile の app.json）を Origin として
+    // 送るので、入れておかないとサインインが CSRF として弾かれる。
+    "TRUSTED_ORIGINS": "https://ai-chat-with-cloudflare.u7s.workers.dev,aichat://",
   },
 
   "ai": { "binding": "AI" },
