@@ -1,5 +1,15 @@
 [[pre-start]]
 trust = "mise trust"
 
+# gitignore されているファイルのうち `.worktreeinclude` に挙げたものを
+# main の worktree から複製する（`install` より前に置くこと）。
+#
+# **`--require-include` を外さないこと。** 外すと `.worktreeinclude` が無いときに
+# gitignore された全ファイルがコピーされ、`.turbo` / `dist` / `.wrangler` / `.expo` の
+# ビルドキャッシュを古い worktree から持ち込んでしまう。付けておけば
+# 「ファイルが無ければ何もしない」で安全側に倒れる。
+[[pre-start]]
+secrets = "wt step copy-ignored --require-include"
+
 [[pre-start]]
 install = "ni"

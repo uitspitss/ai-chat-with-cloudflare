@@ -15,6 +15,9 @@ dist/
 # expo
 .expo/
 apps/mobile/expo-env.d.ts
+# CNG（prebuild で生成される）。ネイティブの設定は app.json と config plugin が持つ
+apps/mobile/ios/
+apps/mobile/android/
 
 # wrangler のローカルシークレット。秘密はリポジトリに置かない
 # （secrets:pull の中間ファイル .dev.vars.tmp も含めるので * を付ける）

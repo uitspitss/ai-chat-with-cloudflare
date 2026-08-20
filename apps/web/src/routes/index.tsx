@@ -1,4 +1,4 @@
-import type { Thread } from "@repo/schema";
+import { threadsKey } from "@repo/app-api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { MessagesSquareIcon, PlusIcon, Trash2Icon } from "lucide-react";
@@ -16,11 +16,8 @@ import { Input } from "@/components/ui/input";
 import { Item, ItemActions, ItemContent, ItemTitle } from "@/components/ui/item";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
-import { api } from "@/lib/api";
-import { apiError } from "@/lib/api-error";
+import { appApi } from "@/lib/api";
 import { requireSession } from "@/lib/require-session";
-
-const threadsKey = ["threads"] as const;
 
 function ThreadListPage() {
   const navigate = useNavigate();
@@ -29,21 +26,11 @@ function ThreadListPage() {
 
   const threads = useQuery({
     queryKey: threadsKey,
-    queryFn: async (): Promise<Thread[]> => {
-      const res = await api.api.threads.$get();
-      if (!res.ok) throw await apiError(res, "スレッド一覧の取得に失敗した");
-      return res.json();
-    },
+    queryFn: () => appApi.listThreads(),
   });
 
   const createThread = useMutation({
-    mutationFn: async (newTitle: string): Promise<Thread> => {
-      const res = await api.api.threads.$post({
-        json: { title: newTitle || "New thread" },
-      });
-      if (!res.ok) throw await apiError(res, "スレッドの作成に失敗した");
-      return res.json();
-    },
+    mutationFn: (newTitle: string) => appApi.createThread(newTitle || "New thread"),
     onSuccess: (thread) => {
       setTitle("");
       queryClient.invalidateQueries({ queryKey: threadsKey });
@@ -52,10 +39,7 @@ function ThreadListPage() {
   });
 
   const deleteThread = useMutation({
-    mutationFn: async (id: string) => {
-      const res = await api.api.threads[":id"].$delete({ param: { id } });
-      if (!res.ok) throw await apiError(res, "スレッドの削除に失敗した");
-    },
+    mutationFn: (id: string) => appApi.deleteThread(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: threadsKey }),
   });
 

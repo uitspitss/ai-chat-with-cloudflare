@@ -1,4 +1,4 @@
-import type { FileMeta } from "@repo/schema";
+import { attachmentsKey } from "@repo/app-api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FileTextIcon, PaperclipIcon } from "lucide-react";
 import { useRef } from "react";
@@ -12,52 +12,31 @@ import {
 } from "@/components/ui/attachment";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { api } from "@/lib/api";
-import { apiError } from "@/lib/api-error";
+import { appApi } from "@/lib/api";
 
-/**
- * ファイル選択 → Hono にアップロード URL を要求 → その URL に PUT。
- * 本体は API サーバー経由で R2 に入る（presigned URL 方式に差し替えても
- * クライアント側の手順は変わらない）。
- */
+/** ファイル選択 → アップロード。手順は `@repo/app-api` が持つ（mobile と共通）。 */
 export function ThreadFiles({ threadId }: { threadId: string }) {
   const queryClient = useQueryClient();
   const inputRef = useRef<HTMLInputElement>(null);
-  const filesKey = ["files", threadId] as const;
+  const key = attachmentsKey(threadId);
 
   const files = useQuery({
-    queryKey: filesKey,
-    queryFn: async (): Promise<FileMeta[]> => {
-      const res = await api.api.files.$get({ query: { threadId } });
-      if (!res.ok) throw await apiError(res, "添付ファイルの取得に失敗した");
-      return res.json();
-    },
+    queryKey: key,
+    queryFn: () => appApi.listAttachments(threadId),
   });
 
   const upload = useMutation({
-    mutationFn: async (file: File) => {
-      const urlRes = await api.api.files["upload-url"].$post({
-        json: {
-          threadId,
-          name: file.name,
-          size: file.size,
-          contentType: file.type || "application/octet-stream",
-        },
-      });
-      if (!urlRes.ok) throw await apiError(urlRes, "アップロード URL の発行に失敗した");
-      const { uploadUrl } = await urlRes.json();
-
-      const putRes = await fetch(uploadUrl, {
-        method: "PUT",
+    mutationFn: (file: File) =>
+      appApi.uploadAttachment({
+        threadId,
+        name: file.name,
+        size: file.size,
+        contentType: file.type || "application/octet-stream",
         body: file,
-        credentials: "include",
-        headers: { "content-type": file.type || "application/octet-stream" },
-      });
-      if (!putRes.ok) throw await apiError(putRes, "アップロードに失敗した");
-    },
+      }),
     onSuccess: () => {
       if (inputRef.current) inputRef.current.value = "";
-      queryClient.invalidateQueries({ queryKey: filesKey });
+      queryClient.invalidateQueries({ queryKey: key });
     },
   });
 
@@ -107,7 +86,7 @@ export function ThreadFiles({ threadId }: { threadId: string }) {
               </AttachmentMedia>
               <AttachmentContent>
                 <AttachmentTitle>
-                  <a href={`/api/files/${file.id}/content`} target="_blank" rel="noreferrer">
+                  <a href={appApi.attachmentContentUrl(file.id)} target="_blank" rel="noreferrer">
                     {file.name}
                   </a>
                 </AttachmentTitle>

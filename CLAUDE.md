@@ -67,6 +67,22 @@ WebSocket の `onBeforeConnect`・Vite の proxy といった**結線の失敗�
 - UI を変えたときは通ったことで満足しない。**長い日本語のスレッド名や大きい添付など
   現実的なデータを入れて、はみ出し・重なり・見切れをスクリーンショットで見る**
 
+サーバーの起動手順（web ビルド → D1 の作り直し → `wrangler dev` → ダミー LLM）は
+`e2e/scripts/serve.sh` が持つ。**Playwright も Maestro もこれを呼ぶ。**
+手順を書き足すときはここだけを直す（2 箇所に書くと片方だけ直して黙って乖離する）。
+
+### モバイルの E2E は Maestro（ローカル専用）
+
+`nr test:e2e:mobile`。**CI には入れていない**（macOS runner と 20 分級のネイティブ
+ビルドが毎 PR に乗るため）。CI 側は `nr build` の `expo export` が Metro /
+NativeWind の結線だけを見ている。
+
+- flow は `apps/mobile/.maestro/`。要素は `testID` で指す（文言を変えても壊れない）
+- **添付のアップロードだけは Maestro から API を直接叩いている。** iOS の
+  ドキュメントピッカーはアプリと別プロセスで、Maestro から確実に触れないため。
+  裏返すと **RN の `fetch` から R2 へ PUT する経路には自動テストが無い**ので、
+  添付まわりを触ったらシミュレータで実際に選んでアップロードすること
+
 ## 開発サーバー
 
 - `nr dev` で全アプリを同時起動
@@ -78,9 +94,11 @@ WebSocket の `onBeforeConnect`・Vite の proxy といった**結線の失敗�
 
 - `apps/server` - Hono + Agents SDK + Drizzle (Cloudflare Workers)
 - `apps/web` - Vite + React + TanStack Router (SPA)
-- `apps/mobile` - Expo（雛形のみ。画面は未実装）
+- `apps/mobile` - Expo（expo-router + NativeWind）。**iOS のみ保証**、Android は best-effort
 - `packages/schema` - zod スキーマ・共有型
 - `packages/api-client` - Hono RPC クライアントのファクトリ
+- `packages/app-api` - web / mobile が共有する API 呼び出し（素の async 関数 + queryKey）
+- `packages/design-tokens` - web / mobile が共有する CSS のトークン（生の値のみ）
 
 ## ファイル命名規則
 
@@ -230,6 +248,74 @@ grep -rn 'env\.BUCKET\|drizzle(' presentation/ index.ts                # 何も�
 - 認証テーブル（`user` / `session` / `account` / `verification`）は
   `apps/server/src/infrastructure/d1/auth-schema.ts`。Better Auth の既定名に合わせてあるので
   リネームしない
+- **ネイティブ対応は `TRUSTED_ORIGINS` に scheme を足すだけでは終わらない。**
+  サーバーの `createAuth` にも `expo()` プラグインが要る。RN の fetch は `Origin` を
+  送らず、Expo クライアントが送るのは `expo-origin`。それを `origin` に写すのが
+  このプラグインなので、無いと許可リストは**一度も照合されない**
+  - **壊れるのはサインアウトだけ**、という形で出る。cookie を持たないサインイン /
+    サインアップは `validateOrigin` に到達しないので通り、cookie 付きの POST だけが
+    `MISSING_OR_NULL_ORIGIN` で 403 になる。しかもクライアントは throw せず
+    ローカルの cookie を先に捨てるので、**画面はサインアウトできたように見えて
+    サーバーのセッションが残る**
+  - 単体テストでも Maestro でも出ない。`e2e/native-auth.spec.ts` で固定してある
+
+## モバイル（Expo）
+
+ネイティブ側の認証は `apps/mobile/README.md` に、WebSocket に cookie を載せる判断は
+`docs/adr/0001-native-websocket-auth.md` にある。ここには**実際に踏んだ落とし穴**だけを置く。
+
+- **`className` が効くのは `react-native` のコンポーネントだけ。** NativeWind の
+  `globalClassNamePolyfill` は `react-native` の**解決を差し替える**仕組みなので、
+  サードパーティ（`react-native-safe-area-context` など）には効かない。しかも
+  エラーにならず**黙って無視される**ので、`flex-1` が付かず高さ 0 の空白画面になり、
+  原因が分からなくなる。`src/components/safe-area-view.tsx` のように
+  `useCssElement` で包む
+- **Hermes には `crypto` も `MessageEvent` も無い。** 前者は AI SDK / Agents SDK が
+  `crypto.randomUUID()` を使うため、後者は partysocket が受信フレームを
+  `new MessageEvent()` に包み直すため要る。`src/lib/polyfills.ts` を
+  `_layout.tsx` の先頭で import する。**どちらも型検査は通る。** crypto は画面を
+  開いた瞬間に落ち、MessageEvent は「WebSocket は 101 で繋がるのにメッセージが
+  1 通も届かない」という分かりにくい形で出る
+- **ネイティブモジュール（`expo-*` の多く）を足したら再ビルドが要る。**
+  Metro のリロードでは入らず「Cannot find native module」で落ちる
+- **SecureStore は iOS の Keychain なので `clearState` では消えない。**
+  Maestro の flow は `clearKeychain` を先に置く（無いと 2 回目がサインイン済みで始まる）
+- **サインイン成功後の遷移は宣言的に書く。** `router.replace("/")` を呼ぶと
+  `useSession()` の更新より先に遷移してしまい、`(app)` のガードが「未認証」と
+  判断して押し戻す。ガードと同じストアを見て `<Redirect>` を返す
+
+### バージョンを `^` で入れてはいけないもの
+
+- **`better-auth` / `@better-auth/expo` は `~`。** `^1.6.30` は 1.7.0 を掴み、
+  1.7 は `account` テーブルに `issuer` 列を足すので、D1 のマイグレーション無しでは
+  サインアップが 500 になる。上げるときはスキーマ変更とセットで行う
+- **`lightningcss` は `pnpm-workspace.yaml` の `overrides` で 1.30.1 に固定。**
+  react-native-css（NativeWind v5）が 1.32 / 1.33 で Tailwind v4 の出力を読み戻せず、
+  Metro の bundling が「failed to deserialize ... Specifier」で落ちる
+
+### 公開直後の版は CI が弾く
+
+**pnpm 11 は公開から 24 時間以内のパッケージを既定で拒否する**
+（`pnpm-workspace.yaml` の `minimumReleaseAge` はこれを 7 日へ延ばすための行で、
+コメントアウトされていても既定の 24 時間は生きている）。
+
+`expo install` が出たばかりの版を掴むと、逃げ道として
+`minimumReleaseAgeExclude` を勝手に書き足す。**これを「不要な差分」と見て消すな。**
+消しても手元の `pnpm install` は node_modules が最新なら検査を飛ばすので通り、
+**CI の `nci`（クリーンな解決）だけが `ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION` で落ちる。**
+
+正しい直し方は除外を戻すことではなく、**24 時間以上前に出た版へ範囲を下げる**こと
+（`~57.0.14` → `~57.0.13`）。ただし範囲を緩めるだけでは既存のロックが満たしたままで
+再解決されない。手順:
+
+1. `package.json` を目的の版に**厳密固定**する（`57.0.13`）
+2. 一時的に `minimumReleaseAgeExclude` を足す。**これが無いと古いロックの検査で
+   止まって解決自体が始まらない**
+3. `pnpm install` → ロックが下がる
+4. 除外を消し、範囲を `~` に戻して `pnpm install`（ロックはそのまま）
+
+確認は**クリーンな clone で `pnpm install --frozen-lockfile`**。手元でそのまま流すと
+「Already up to date」で検査ごと飛ぶので、通ったことの証明にならない。
 
 ## テスト
 

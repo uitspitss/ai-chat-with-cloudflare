@@ -2,15 +2,22 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
-    "types": ["@cloudflare/workers-types"],
     "paths": {
       "@/*": ["./src/*"],
       "@/assets/*": ["./assets/*"],
-      "@repo/schema": ["../../packages/schema/src"],
       "@repo/api-client": ["../../packages/api-client/src"],
-      "@repo/server": ["../server/src/index.ts"]
-    }
+      "@repo/server": ["../server/src/index.ts"],
+      "@repo/app-api": ["../../packages/app-api/src"]
+    },
+    "types": ["@cloudflare/workers-types"]
   },
-  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts", "types.d.ts"],
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts",
+    "types.d.ts",
+    "nativewind-env.d.ts"
+  ],
   "exclude": ["node_modules", "dist", ".expo"]
 }
