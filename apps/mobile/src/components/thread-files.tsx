@@ -3,8 +3,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as DocumentPicker from "expo-document-picker";
 import { File } from "expo-file-system";
 import * as ImagePicker from "expo-image-picker";
-import * as WebBrowser from "expo-web-browser";
+import { useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
+import { AttachmentPreview, type PreviewTarget } from "@/components/attachment-preview";
 import { appApi } from "@/lib/api";
 
 type Picked = { uri: string; name: string; contentType: string };
@@ -50,6 +51,9 @@ export function ThreadFiles({ threadId }: { threadId: string }) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: key }),
   });
 
+  // 開いている添付。ダウンロードと表示は AttachmentPreview の中で完結する
+  const [preview, setPreview] = useState<PreviewTarget | null>(null);
+
   return (
     <View className="gap-2 border-b border-border p-4">
       <View className="flex-row items-center gap-2">
@@ -90,14 +94,17 @@ export function ThreadFiles({ threadId }: { threadId: string }) {
             <Pressable
               key={file.id}
               accessibilityRole="button"
+              testID={`open-attachment-${file.id}`}
               className="rounded-lg border border-border px-3 py-2"
-              onPress={() => WebBrowser.openBrowserAsync(appApi.attachmentContentUrl(file.id))}
+              onPress={() => setPreview(file)}
             >
               <Text className="text-foreground">{file.name}</Text>
             </Pressable>
           ))}
         </ScrollView>
       )}
+
+      <AttachmentPreview target={preview} onClose={() => setPreview(null)} />
     </View>
   );
 }

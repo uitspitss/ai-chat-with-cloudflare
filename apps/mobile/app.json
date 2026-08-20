@@ -37,7 +37,8 @@
         {
           "photosPermission": "添付するファイルを選ぶときに写真ライブラリへアクセスします。"
         }
-      ]
+      ],
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true,

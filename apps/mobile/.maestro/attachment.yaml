@@ -36,6 +36,25 @@ env:
 # 添付が一覧に出る（GET /api/files が Cookie ヘッダ付きで通っている）
 - assertVisible: "release-notes.md"
 
+# タップするとアプリ内プレビューが開く。**ここで見たいのは結線**——
+# ネイティブモジュール（react-native-webview / expo-sharing）がリンクされていること、
+# ダウンロードが Cookie 付きで 200 を返すこと。
+- tapOn: "release-notes.md"
+- extendedWaitUntil:
+    visible:
+      id: "attachment-webview"
+    timeout: 15000
+
+# **「WebView が載った」だけでは足りない。** originWhitelist から外れた URL は
+# エラーも出さずに白い画面のまま載る（一度これを踏んだ）。スピナーは WebView の
+# onLoad で初めて消えるので、消えたことが「本当に描画された」の代わりになる。
+- extendedWaitUntil:
+    notVisible:
+      id: "attachment-loading"
+    timeout: 15000
+- tapOn:
+    id: "close-attachment"
+
 # LLM が R2 から中身を読んで答える。ダミーモデルは 1 ステップ目で
 # readThreadFile を呼び、2 ステップ目でこの文章を返す
 - tapOn:

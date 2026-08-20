@@ -248,6 +248,16 @@ grep -rn 'env\.BUCKET\|drizzle(' presentation/ index.ts                # 何も�
 - 認証テーブル（`user` / `session` / `account` / `verification`）は
   `apps/server/src/infrastructure/d1/auth-schema.ts`。Better Auth の既定名に合わせてあるので
   リネームしない
+- **ネイティブ対応は `TRUSTED_ORIGINS` に scheme を足すだけでは終わらない。**
+  サーバーの `createAuth` にも `expo()` プラグインが要る。RN の fetch は `Origin` を
+  送らず、Expo クライアントが送るのは `expo-origin`。それを `origin` に写すのが
+  このプラグインなので、無いと許可リストは**一度も照合されない**
+  - **壊れるのはサインアウトだけ**、という形で出る。cookie を持たないサインイン /
+    サインアップは `validateOrigin` に到達しないので通り、cookie 付きの POST だけが
+    `MISSING_OR_NULL_ORIGIN` で 403 になる。しかもクライアントは throw せず
+    ローカルの cookie を先に捨てるので、**画面はサインアウトできたように見えて
+    サーバーのセッションが残る**
+  - 単体テストでも Maestro でも出ない。`e2e/native-auth.spec.ts` で固定してある
 
 ## モバイル（Expo）
 

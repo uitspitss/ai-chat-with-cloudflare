@@ -1,4 +1,5 @@
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
+import { expo } from "@better-auth/expo";
 import { betterAuth } from "better-auth";
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "../d1/schema";
@@ -13,6 +14,15 @@ export function createAuth(env: Bindings) {
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
     trustedOrigins: env.TRUSTED_ORIGINS?.split(",").map((o) => o.trim()) ?? [],
+    /**
+     * **`aichat://` を trustedOrigins に入れるだけでは効かない。** RN の fetch は
+     * `Origin` を送らず、Expo クライアントが送るのは `expo-origin`。それを `origin`
+     * に写すのがこのプラグインの `onRequest` で、無いと照合対象が空のままになる。
+     *
+     * 表に出るのは**サインアウトだけ**。cookie を持たないサインイン / サインアップは
+     * origin 検査に到達しないので、抜けていてもアプリは通しで動いてしまう。
+     */
+    plugins: [expo()],
     database: drizzleAdapter(drizzle(env.DB), {
       provider: "sqlite",
       schema,
