@@ -293,6 +293,30 @@ grep -rn 'env\.BUCKET\|drizzle(' presentation/ index.ts                # 何も�
   react-native-css（NativeWind v5）が 1.32 / 1.33 で Tailwind v4 の出力を読み戻せず、
   Metro の bundling が「failed to deserialize ... Specifier」で落ちる
 
+### 公開直後の版は CI が弾く
+
+**pnpm 11 は公開から 24 時間以内のパッケージを既定で拒否する**
+（`pnpm-workspace.yaml` の `minimumReleaseAge` はこれを 7 日へ延ばすための行で、
+コメントアウトされていても既定の 24 時間は生きている）。
+
+`expo install` が出たばかりの版を掴むと、逃げ道として
+`minimumReleaseAgeExclude` を勝手に書き足す。**これを「不要な差分」と見て消すな。**
+消しても手元の `pnpm install` は node_modules が最新なら検査を飛ばすので通り、
+**CI の `nci`（クリーンな解決）だけが `ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION` で落ちる。**
+
+正しい直し方は除外を戻すことではなく、**24 時間以上前に出た版へ範囲を下げる**こと
+（`~57.0.14` → `~57.0.13`）。ただし範囲を緩めるだけでは既存のロックが満たしたままで
+再解決されない。手順:
+
+1. `package.json` を目的の版に**厳密固定**する（`57.0.13`）
+2. 一時的に `minimumReleaseAgeExclude` を足す。**これが無いと古いロックの検査で
+   止まって解決自体が始まらない**
+3. `pnpm install` → ロックが下がる
+4. 除外を消し、範囲を `~` に戻して `pnpm install`（ロックはそのまま）
+
+確認は**クリーンな clone で `pnpm install --frozen-lockfile`**。手元でそのまま流すと
+「Already up to date」で検査ごと飛ぶので、通ったことの証明にならない。
+
 ## テスト
 
 - TDD（テスト駆動開発）で実装する
