@@ -1,5 +1,5 @@
 import { createAppApi } from "@repo/app-api";
-import { currentCookie, refreshCookie } from "./auth";
+import { authHeaders } from "./auth";
 import { API_BASE_URL } from "./env";
 
 /**
@@ -12,10 +12,8 @@ import { API_BASE_URL } from "./env";
  */
 export const cookieFetch: typeof fetch = (input, init) => {
   const headers = new Headers(init?.headers);
-  headers.set("Cookie", currentCookie());
+  for (const [name, value] of Object.entries(authHeaders())) headers.set(name, value);
   return fetch(input, { ...init, credentials: "omit", headers });
 };
 
 export const appApi = createAppApi({ baseUrl: API_BASE_URL, fetch: cookieFetch });
-
-export { refreshCookie };

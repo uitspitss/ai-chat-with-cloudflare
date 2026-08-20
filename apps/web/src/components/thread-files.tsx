@@ -1,4 +1,4 @@
-import { filesKey } from "@repo/app-api";
+import { attachmentsKey } from "@repo/app-api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FileTextIcon, PaperclipIcon } from "lucide-react";
 import { useRef } from "react";
@@ -18,16 +18,16 @@ import { appApi } from "@/lib/api";
 export function ThreadFiles({ threadId }: { threadId: string }) {
   const queryClient = useQueryClient();
   const inputRef = useRef<HTMLInputElement>(null);
-  const key = filesKey(threadId);
+  const key = attachmentsKey(threadId);
 
   const files = useQuery({
     queryKey: key,
-    queryFn: () => appApi.listFiles(threadId),
+    queryFn: () => appApi.listAttachments(threadId),
   });
 
   const upload = useMutation({
     mutationFn: (file: File) =>
-      appApi.uploadFile({
+      appApi.uploadAttachment({
         threadId,
         name: file.name,
         size: file.size,
@@ -86,7 +86,7 @@ export function ThreadFiles({ threadId }: { threadId: string }) {
               </AttachmentMedia>
               <AttachmentContent>
                 <AttachmentTitle>
-                  <a href={appApi.fileContentUrl(file.id)} target="_blank" rel="noreferrer">
+                  <a href={appApi.attachmentContentUrl(file.id)} target="_blank" rel="noreferrer">
                     {file.name}
                   </a>
                 </AttachmentTitle>

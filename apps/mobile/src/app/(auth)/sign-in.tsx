@@ -11,8 +11,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "@/components/safe-area-view";
-import { refreshCookie } from "@/lib/api";
-import { signIn, signUp, useSession } from "@/lib/auth";
+import { refreshCookie, signIn, signUp, useSession } from "@/lib/auth";
 
 export default function SignInScreen() {
   const { data: session } = useSession();

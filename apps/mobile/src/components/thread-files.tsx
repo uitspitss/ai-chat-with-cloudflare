@@ -1,4 +1,4 @@
-import { filesKey } from "@repo/app-api";
+import { attachmentsKey } from "@repo/app-api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as DocumentPicker from "expo-document-picker";
 import { File } from "expo-file-system";
@@ -24,7 +24,7 @@ function toUpload(threadId: string, picked: Picked) {
   // サーバーが 413 を返し、原因が「壊れたファイル」に見えてしまう。
   if (file.size == null) throw new Error("ファイルのサイズが取得できなかった");
 
-  return appApi.uploadFile({
+  return appApi.uploadAttachment({
     threadId,
     name: picked.name,
     size: file.size,
@@ -35,11 +35,11 @@ function toUpload(threadId: string, picked: Picked) {
 
 export function ThreadFiles({ threadId }: { threadId: string }) {
   const queryClient = useQueryClient();
-  const key = filesKey(threadId);
+  const key = attachmentsKey(threadId);
 
   const files = useQuery({
     queryKey: key,
-    queryFn: () => appApi.listFiles(threadId),
+    queryFn: () => appApi.listAttachments(threadId),
   });
 
   const upload = useMutation({
@@ -91,7 +91,7 @@ export function ThreadFiles({ threadId }: { threadId: string }) {
               key={file.id}
               accessibilityRole="button"
               className="rounded-lg border border-border px-3 py-2"
-              onPress={() => WebBrowser.openBrowserAsync(appApi.fileContentUrl(file.id))}
+              onPress={() => WebBrowser.openBrowserAsync(appApi.attachmentContentUrl(file.id))}
             >
               <Text className="text-foreground">{file.name}</Text>
             </Pressable>
@@ -128,9 +128,20 @@ async function pickPhoto(): Promise<Picked | null> {
   });
   const asset = picked.assets?.[0];
   if (picked.canceled || !asset) return null;
+
+  const contentType = asset.mimeType || "image/jpeg";
   return {
     uri: asset.uri,
-    name: asset.fileName ?? `photo-${asset.assetId ?? "picked"}.jpg`,
-    contentType: asset.mimeType || "image/jpeg",
+    // **拡張子を .jpg 固定にしない。** HEIC や PNG を選んでも名前だけ jpeg になり、
+    // content-type と食い違ったファイルがダウンロード時に開けなくなる。
+    name: asset.fileName ?? `photo-${asset.assetId ?? "picked"}.${extensionOf(contentType)}`,
+    contentType,
   };
+}
+
+/** `image/heic` -> `heic`。未知の型は拡張子を付けない（嘘の拡張子より無いほうがまし）。 */
+function extensionOf(contentType: string): string {
+  const subtype = contentType.split("/")[1]?.split(";")[0];
+  if (!subtype) return "bin";
+  return subtype === "jpeg" ? "jpg" : subtype;
 }

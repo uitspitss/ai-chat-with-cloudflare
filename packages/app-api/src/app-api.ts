@@ -15,7 +15,7 @@ export type AppApiOptions = {
   fetch?: typeof fetch;
 };
 
-export type UploadFileInput = {
+export type UploadAttachmentInput = {
   threadId: string;
   name: string;
   size: number;
@@ -27,6 +27,9 @@ export type UploadFileInput = {
 /**
  * web と mobile が共有する API 呼び出し。**TanStack Query には依存しない**素の
  * async 関数として提供し、キャッシュの組み立ては各アプリに任せる。
+ *
+ * 名前は CONTEXT.md の語彙（**Attachment**）に合わせる。URL が `/api/files` なのは
+ * 既存のワイヤ契約なのでそのままだが、**呼ぶ側に "file" という語を広げない。**
  */
 export function createAppApi({ baseUrl, fetch: fetchImpl }: AppApiOptions) {
   const httpFetch: typeof fetch =
@@ -51,7 +54,7 @@ export function createAppApi({ baseUrl, fetch: fetchImpl }: AppApiOptions) {
       if (!res.ok) throw await apiError(res, "スレッドの削除に失敗した");
     },
 
-    async listFiles(threadId: string): Promise<FileMeta[]> {
+    async listAttachments(threadId: string): Promise<FileMeta[]> {
       const res = await api.api.files.$get({ query: { threadId } });
       if (!res.ok) throw await apiError(res, "添付ファイルの取得に失敗した");
       return res.json();
@@ -61,7 +64,7 @@ export function createAppApi({ baseUrl, fetch: fetchImpl }: AppApiOptions) {
      * アップロード URL を発行 → その URL に PUT。本体は API サーバー経由で R2 に入る。
      * presigned URL 方式に差し替えてもこの手順は変わらない。
      */
-    async uploadFile(input: UploadFileInput): Promise<void> {
+    async uploadAttachment(input: UploadAttachmentInput): Promise<void> {
       const urlRes = await api.api.files["upload-url"].$post({
         json: {
           threadId: input.threadId,
@@ -82,10 +85,8 @@ export function createAppApi({ baseUrl, fetch: fetchImpl }: AppApiOptions) {
     },
 
     /** 添付の中身を直接開く URL。web はリンク、ネイティブはブラウザで開く。 */
-    fileContentUrl(fileId: string): string {
-      return resolveApiUrl(baseUrl, `/api/files/${fileId}/content`);
+    attachmentContentUrl(attachmentId: string): string {
+      return resolveApiUrl(baseUrl, `/api/files/${attachmentId}/content`);
     },
   };
 }
-
-export type AppApi = ReturnType<typeof createAppApi>;

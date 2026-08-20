@@ -1,4 +1,4 @@
-import { currentCookie } from "./auth";
+import { authHeaders } from "./auth";
 
 /**
  * React Native の WebSocket は第 3 引数で任意ヘッダを受ける
@@ -23,10 +23,10 @@ const NativeWebSocket = WebSocket as unknown as NativeWebSocketConstructor;
  * サーバーの `onBeforeConnect` は今までどおりヘッダからセッションを引ける。
  * **認可の経路が web と 1 本のまま**になる。判断の経緯は docs/adr/0001。
  *
- * cookie を `currentCookie()`（同期）から読むのは、コンストラクタが `await` できないため。
+ * cookie を `authHeaders()`（同期）から読むのは、コンストラクタが `await` できないため。
  */
 export class CookieWebSocket extends NativeWebSocket {
   constructor(url: string, protocols?: string | string[]) {
-    super(url, protocols, { headers: { Cookie: currentCookie() } });
+    super(url, protocols, { headers: authHeaders() });
   }
 }

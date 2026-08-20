@@ -260,9 +260,12 @@ grep -rn 'env\.BUCKET\|drizzle(' presentation/ index.ts                # 何も�
   エラーにならず**黙って無視される**ので、`flex-1` が付かず高さ 0 の空白画面になり、
   原因が分からなくなる。`src/components/safe-area-view.tsx` のように
   `useCssElement` で包む
-- **Hermes に `crypto` グローバルは無い。** AI SDK / Agents SDK が
-  `crypto.randomUUID()` を使うので、`src/lib/crypto-polyfill.ts` を
-  `_layout.tsx` の先頭で import する。型検査は通り、画面を開いた瞬間に落ちる
+- **Hermes には `crypto` も `MessageEvent` も無い。** 前者は AI SDK / Agents SDK が
+  `crypto.randomUUID()` を使うため、後者は partysocket が受信フレームを
+  `new MessageEvent()` に包み直すため要る。`src/lib/polyfills.ts` を
+  `_layout.tsx` の先頭で import する。**どちらも型検査は通る。** crypto は画面を
+  開いた瞬間に落ち、MessageEvent は「WebSocket は 101 で繋がるのにメッセージが
+  1 通も届かない」という分かりにくい形で出る
 - **ネイティブモジュール（`expo-*` の多く）を足したら再ビルドが要る。**
   Metro のリロードでは入らず「Cannot find native module」で落ちる
 - **SecureStore は iOS の Keychain なので `clearState` では消えない。**

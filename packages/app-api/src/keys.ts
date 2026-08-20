@@ -5,4 +5,4 @@
  */
 export const threadsKey = ["threads"] as const;
 
-export const filesKey = (threadId: string) => ["files", threadId] as const;
+export const attachmentsKey = (threadId: string) => ["attachments", threadId] as const;

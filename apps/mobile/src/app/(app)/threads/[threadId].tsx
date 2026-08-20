@@ -1,7 +1,7 @@
 import { useAgentChat } from "@cloudflare/ai-chat/react";
 import { useAgent } from "agents/react";
 import { Redirect, useLocalSearchParams } from "expo-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import { MessageParts } from "@/components/message-parts";
 import { ThreadFiles } from "@/components/thread-files";
-import { currentCookie } from "@/lib/auth";
+import { authHeaders, refreshCookie } from "@/lib/auth";
 import { CookieWebSocket } from "@/lib/cookie-websocket";
 import { API_BASE_URL } from "@/lib/env";
 
@@ -34,6 +34,11 @@ export default function ChatScreen() {
 
 function Chat({ threadId }: { threadId: string }) {
   const [input, setInput] = useState("");
+  const listRef = useRef<FlatList<(typeof messages)[number]>>(null);
+
+  // 認証で切られた疑いのある切断に対して cookie を取り直すのは **1 回だけ**。
+  // 無制限に繰り返すと、サインアウト済みの端末が延々と再接続を試み続ける。
+  const retriedAfterAuthFailure = useRef(false);
 
   // agent-per-thread: インスタンス名を threadId にすることで
   // スレッドごとに独立した Durable Object（＝独立した会話履歴）になる。
@@ -44,6 +49,25 @@ function Chat({ threadId }: { threadId: string }) {
     name: threadId,
     host: API_BASE_URL,
     WebSocket: CookieWebSocket,
+
+    onOpen: () => {
+      retriedAfterAuthFailure.current = false;
+    },
+
+    /**
+     * `onBeforeConnect` が弾くと 403 はハンドシェイクの HTTP 応答で返るので、
+     * **クライアントには「clean でない切断」としてしか見えない**（ステータスは取れない）。
+     * そこで「clean でない切断は認証切れかもしれない」とみなして cookie を取り直し、
+     * 新しい値で 1 回だけ繋ぎ直す。それでも駄目なら諦める。
+     */
+    shouldReconnectOnClose: (event) => {
+      if (event.wasClean) return true;
+      if (retriedAfterAuthFailure.current) return false;
+
+      retriedAfterAuthFailure.current = true;
+      refreshCookie();
+      return true;
+    },
   });
 
   // 初期メッセージの取得だけは通常の HTTP なので、ヘッダで cookie を渡す。
@@ -51,7 +75,7 @@ function Chat({ threadId }: { threadId: string }) {
   const { messages, sendMessage, status, clearHistory } = useAgentChat({
     agent,
     credentials: "omit",
-    headers: { Cookie: currentCookie() },
+    headers: authHeaders(),
   });
 
   const busy = status === "streaming" || status === "submitted";
@@ -65,7 +89,12 @@ function Chat({ threadId }: { threadId: string }) {
       <ThreadFiles threadId={threadId} />
 
       <FlatList
+        ref={listRef}
         className="flex-1"
+        // 新しい発言とストリーミング中の差分を追いかける。web 側は
+        // MessageScroller の autoScroll が担っている役目。無いと送信しても
+        // 画面外に積まれて「送れていない」ように見える。
+        onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
         data={messages}
         keyExtractor={(message) => message.id}
         contentContainerClassName="gap-3 p-4"

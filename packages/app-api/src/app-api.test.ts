@@ -1,21 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { createAppApi } from "./app-api";
+import { type AppApiOptions, createAppApi } from "./app-api";
 
 type Call = { url: string; init?: RequestInit };
 
 /**
  * `fetch` を差し替えて検証する。Hono RPC クライアントごと通すので、
  * 「どのパスに何を投げるか」という**結線**まで固定できる。
+ *
+ * **`as unknown as` を使わない。** 差し替え口の型をそのまま受けることで、
+ * signature が変わったらこのスタブがコンパイルエラーになる。
  */
 function stubFetch(handler: (call: Call) => Response) {
   const calls: Call[] = [];
-  const impl = (async (input: RequestInfo | URL, init?: RequestInit) => {
+  const impl: NonNullable<AppApiOptions["fetch"]> = async (input, init) => {
     const url =
       typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
     const call = { url, init };
     calls.push(call);
     return handler(call);
-  }) as unknown as typeof fetch;
+  };
   return { impl, calls };
 }
 
@@ -71,7 +74,7 @@ describe("createAppApi", () => {
     const { impl, calls } = stubFetch(() => json([fileMeta]));
     const api = createAppApi({ baseUrl: "/", fetch: impl });
 
-    expect(await api.listFiles(thread.id)).toEqual([fileMeta]);
+    expect(await api.listAttachments(thread.id)).toEqual([fileMeta]);
     expect(calls[0]?.url).toBe(`/api/files?threadId=${thread.id}`);
   });
 
@@ -90,7 +93,7 @@ describe("createAppApi", () => {
     );
     const api = createAppApi({ baseUrl: "https://api.example.com", fetch: impl });
 
-    await api.uploadFile({
+    await api.uploadAttachment({
       threadId: thread.id,
       name: fileMeta.name,
       size: fileMeta.size,
@@ -125,8 +128,8 @@ describe("createAppApi", () => {
     const relative = createAppApi({ baseUrl: "/" });
     const absolute = createAppApi({ baseUrl: "https://api.example.com" });
 
-    expect(relative.fileContentUrl(fileMeta.id)).toBe(`/api/files/${fileMeta.id}/content`);
-    expect(absolute.fileContentUrl(fileMeta.id)).toBe(
+    expect(relative.attachmentContentUrl(fileMeta.id)).toBe(`/api/files/${fileMeta.id}/content`);
+    expect(absolute.attachmentContentUrl(fileMeta.id)).toBe(
       `https://api.example.com/api/files/${fileMeta.id}/content`,
     );
   });

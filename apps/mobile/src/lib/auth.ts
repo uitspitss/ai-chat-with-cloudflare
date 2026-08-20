@@ -22,8 +22,13 @@ export const { signIn, signUp, useSession } = authClient;
  */
 let cachedCookie = "";
 
-export function currentCookie(): string {
-  return cachedCookie;
+/**
+ * 3 経路（REST / get-messages / WebSocket）が共有する認証ヘッダ。
+ * **`Cookie: ...` の組み立てをここだけにする。** 各所で書くと、片方だけ直したときに
+ * 「REST は通るのに WebSocket だけ 403」のような形で黙って割れる。
+ */
+export function authHeaders(): { Cookie: string } {
+  return { Cookie: cachedCookie };
 }
 
 export function refreshCookie(): string {
