@@ -3,7 +3,7 @@
 # 登録は API を直接叩く（.maestro/scripts/attach-file.js のコメント参照）。
 # chat.yaml が先に走ってユーザーを作っている前提だが、スクリプト側で
 # sign-up → sign-in に落ちるので単独でも動く。
-appId: com.anonymous.ai-chat
+appId: dev.uitspitss.aichat
 env:
   EMAIL: maestro@example.test
   PASSWORD: maestro-password-1234

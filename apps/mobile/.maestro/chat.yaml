@@ -5,7 +5,7 @@
 # 単体テストのモックでは絶対に出ない類のもの。
 #
 # LLM は E2E_FAKE_LLM=1 のダミー（e2e/scripts/serve.sh が渡す）。
-appId: com.anonymous.ai-chat
+appId: dev.uitspitss.aichat
 env:
   EMAIL: maestro@example.test
   PASSWORD: maestro-password-1234
