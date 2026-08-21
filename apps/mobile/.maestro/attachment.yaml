@@ -3,7 +3,7 @@
 # 登録は API を直接叩く（.maestro/scripts/attach-file.js のコメント参照）。
 # chat.yaml が先に走ってユーザーを作っている前提だが、スクリプト側で
 # sign-up → sign-in に落ちるので単独でも動く。
-appId: com.anonymous.ai-chat
+appId: dev.uitspitss.aichat
 env:
   EMAIL: maestro@example.test
   PASSWORD: maestro-password-1234
@@ -30,6 +30,11 @@ env:
 - hideKeyboard
 - tapOn:
     id: "auth-submit"
+
+# chat.yaml と同じ理由（iOS のパスワード保存ダイアログ）。
+- tapOn:
+    text: "Not Now|今はしない"
+    optional: true
 
 - tapOn: "添付のテスト"
 
