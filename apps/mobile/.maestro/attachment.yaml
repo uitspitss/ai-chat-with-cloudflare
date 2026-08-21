@@ -31,6 +31,11 @@ env:
 - tapOn:
     id: "auth-submit"
 
+# chat.yaml と同じ理由（iOS のパスワード保存ダイアログ）。
+- tapOn:
+    text: "Not Now|今はしない"
+    optional: true
+
 - tapOn: "添付のテスト"
 
 # 添付が一覧に出る（GET /api/files が Cookie ヘッダ付きで通っている）

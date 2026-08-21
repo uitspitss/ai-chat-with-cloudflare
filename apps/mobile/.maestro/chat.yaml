@@ -33,6 +33,15 @@ env:
 - tapOn:
     id: "auth-submit"
 
+# **iOS のパスワード保存ダイアログを閉じる。** password の TextInput を送信すると
+# OS が「Save Password?」を被せてくる。これはアプリではなく springboard の外側に
+# 出るので Maestro の権限ダイアログ自動タップの対象外で、放っておくと以降の
+# assertVisible が全部「見えない」で落ちる（画面には映っているのに、が分かりにくい）。
+# 出るかどうかは iOS のバージョンと Keychain の状態で変わるので optional。
+- tapOn:
+    text: "Not Now|今はしない"
+    optional: true
+
 # サーバーを使い回すと D1 が残っていてユーザーが既にいる（既存の e2e/auth.setup.ts と
 # 同じ事情）。そのときはサインインに切り替えて出し直す。
 #
