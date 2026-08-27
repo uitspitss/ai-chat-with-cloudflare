@@ -25,6 +25,20 @@
       "cache": false,
       "persistent": true
     },
+    // server の dev には Drizzle Studio を相乗りさせる（db:studio は server だけが持つ）。
+    // with は dependsOn と違って待ち合わせず、常駐タスクを横に並べるためのもの。
+    // ここに書いてあるので `nr dev` 側でタスク名を並べる必要は無く、
+    // `--filter` で web だけ起動したときは studio も付いてこない。
+    "@repo/server#dev": {
+      "cache": false,
+      "persistent": true,
+      "with": ["@repo/server#db:studio"]
+    },
+    // https://local.drizzle.studio が :4983 のローカルサーバーを見る。
+    "db:studio": {
+      "cache": false,
+      "persistent": true
+    },
     "storybook": {
       "cache": false,
       "persistent": true

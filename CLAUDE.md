@@ -87,6 +87,13 @@ NativeWind の結線だけを見ている。
 
 - `nr dev` で全アプリを同時起動
 - Claude Code から実行する場合は `na exec turbo run dev --ui=stream` を使う
+- `nr dev` は Drizzle Studio（:4983、ブラウザは https://local.drizzle.studio）も一緒に上げる。
+  ローカル D1 の sqlite はファイル名が DB ID のハッシュなので `drizzle.config.ts` が
+  `.wrangler/state/v3/d1/` から探す。**接続には `@libsql/client` が要る**
+  （drizzle-kit は driver を同梱しない）
+- **studio は `nr db:migrate:local` を一度も流していないと起動に失敗する**（探す先の
+  sqlite がまだ無い）。`turbo run ... --continue` にしてあるので dev / vite は巻き添えに
+  ならないが、studio だけ落ちた状態になる
 - チャットの動作確認には `wrangler dev`（:8787）と `vite`（:5173）の両方が要る。
   ブラウザは :5173 を見る（Vite の proxy が `/api` と `/agents` を :8787 に流す）
 
