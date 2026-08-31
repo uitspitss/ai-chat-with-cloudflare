@@ -9,7 +9,7 @@ Cloudflare だけで組んだエージェンティックチャット。Workers /
 - 会話履歴は **`ChatAgent`（Durable Object）内蔵の SQLite**。D1 にメッセージテーブルは無い
 - ファイルは **R2**。Hono がアップロード用エンドポイントを発行する
 
-![スレッド画面。添付した release-notes.md について質問すると、エージェントが listThreadFiles ツールを呼んでから回答する](docs/screenshot.jpg)
+![左が web、右が iOS シミュレータのスレッド画面。添付した release-notes.md について質問すると、エージェントが readThreadFile ツールを呼んでから回答する](docs/screenshot.jpg)
 
 ## Getting Started
 
