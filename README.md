@@ -9,6 +9,8 @@ Cloudflare だけで組んだエージェンティックチャット。Workers /
 - 会話履歴は **`ChatAgent`（Durable Object）内蔵の SQLite**。D1 にメッセージテーブルは無い
 - ファイルは **R2**。Hono がアップロード用エンドポイントを発行する
 
+![スレッド画面。添付した release-notes.md について質問すると、エージェントが listThreadFiles ツールを呼んでから回答する](docs/screenshot.jpg)
+
 ## Getting Started
 
 ```bash
@@ -94,7 +96,7 @@ na --filter @repo/server exec wrangler dev --local
 │   │   │   │   └── ports/           # 手書きの port（repository / storage / 会話履歴）
 │   │   │   ├── application/     # Application Services
 │   │   │   │   ├── thread-service.ts
-│   │   │   │   └── file-service.ts
+│   │   │   │   └── attachment-service.ts
 │   │   │   ├── infrastructure/  # port を実装する adapter
 │   │   │   │   ├── d1/              # schema / repository
 │   │   │   │   ├── r2/              # FileStorage の実装
@@ -189,14 +191,17 @@ na exec wrangler r2 bucket create ai-chat-with-cloudflare-files
 # 3. 本番の秘密鍵を登録
 na exec wrangler secret put BETTER_AUTH_SECRET
 
-# 4. 本番オリジンは wrangler.jsonc の vars に**設定済み**
-#    （https://ai-chat-with-cloudflare.u7s.workers.dev）。変えるときだけ触る。
+# 4. 本番オリジンを wrangler.jsonc の vars に入れる。**自分の Worker の URL に
+#    置き換えること**（既定値はこのリポジトリのもの）。BETTER_AUTH_URL と
+#    TRUSTED_ORIGINS の両方を直す。ネイティブアプリを使うなら TRUSTED_ORIGINS の
+#    deep link scheme（aichat://）はそのまま残す。
 #
 #    **vars は dev の値を置く場所ではない。** `wrangler deploy` は vars を本番へ
 #    上書きするので、localhost を書くと本番のサインインが Origin 検証で全部
 #    403 になる。ローカルは .dev.vars が vars を上書きするので困らない。
 
 # 4'. 各自のローカルを最新にする。**先にこれをやること**
+#     （dotenvx の復号キーを持つメンバー向け。外部からのクローンでは不要）
 cd ../.. && na --filter @repo/server run secrets:pull && cd apps/server
 #    BETTER_AUTH_SECRET しか入っていない古い .dev.vars が実在した。その状態だと
 #    ローカルが wrangler.jsonc の本番オリジンを見に行き、サインインが
@@ -241,6 +246,10 @@ merge すると本番の `BETTER_AUTH_URL` / `TRUSTED_ORIGINS` が localhost に
 `CLOUDFLARE_ACCOUNT_ID`）。**Cloudflare の認証情報はリポジトリに置かない。**
 
 ### チームで共有するローカル秘密（dotenvx）
+
+**外部からクローンした場合、この節は読み飛ばしてよい。** 復号キーは配布しないので
+`secrets:pull` は `could not decrypt` で落ちる。Getting Started の `openssl rand` で
+自分の `.dev.vars` を作れば動く。
 
 `ANTHROPIC_API_KEY` のように**全員が同じ値を使う**ものは、暗号化した
 `apps/server/dev-secrets.enc` をコミットして配る。復号キー `apps/server/.env.keys`
