@@ -38,7 +38,7 @@ catalog:
   # pnpm 11 は既定で公開 24 時間以内の版を弾く。^7.0.0 にして解決を pnpm に任せる
   ai: ^7.0.62
   "@cloudflare/ai-chat": ^0.10.1
-  hono: ^4.13.1
+  hono: ^4.13.5
   knip: ^6.32.2
   lefthook: ^2.1.10
   oxfmt: ^0.63.0
