@@ -38,14 +38,14 @@ catalog:
   # pnpm 11 は既定で公開 24 時間以内の版を弾く。^7.0.0 にして解決を pnpm に任せる
   ai: ^7.0.62
   "@cloudflare/ai-chat": ^0.10.1
-  hono: ^4.13.5
+  hono: ^4.13.11
   knip: ^6.32.2
   lefthook: ^2.1.10
   oxfmt: ^0.63.0
   oxlint: ^1.78.0
   turbo: ^2.10.9
   typescript: ^7.0.2
-  zod: ^4.4.3
+  zod: ^4.6.6
   drizzle-orm: ^0.45.2
   react: ^19.2.8
   react-dom: ^19.2.8

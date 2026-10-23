@@ -48,7 +48,7 @@
     "@libsql/client": "^0.17.4",
     "@types/node": "^26.2.0",
     "drizzle-kit": "^0.31.10",
-    "vitest": "^4.1.10",
+    "vitest": "^5.0.5",
     "wrangler": "^4.121.0"
   }
 }
