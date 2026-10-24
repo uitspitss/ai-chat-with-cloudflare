@@ -26,7 +26,7 @@ catalogs:
       version: 0.45.2
     hono:
       specifier: ^4.13.5
-      version: 4.13.7
+      version: 4.13.13
     knip:
       specifier: ^6.32.2
       version: 6.32.2
@@ -218,7 +218,7 @@ importers:
         version: 0.10.1(@ai-sdk/react@4.0.65(react@19.2.8)(zod@4.4.3))(agents@0.20.1(@ai-sdk/react@4.0.65(react@19.2.8)(zod@4.4.3))(@babel/core@8.0.1)(@babel/plugin-transform-runtime@7.29.7(@babel/core@8.0.1)(supports-color@10.2.2))(@babel/runtime@7.29.7)(@cloudflare/workers-types@5.20260811.1)(@modelcontextprotocol/client@2.0.0)(@modelcontextprotocol/sdk@1.30.0(@cfworker/json-schema@4.1.1)(supports-color@10.2.2)(zod@4.4.3))(@modelcontextprotocol/server@2.0.0)(ai@7.0.62(zod@4.4.3))(react@19.2.8)(rolldown@1.2.3)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(zod@4.4.3))(ai@7.0.62(zod@4.4.3))(react@19.2.8)(zod@4.4.3)
       '@hono/zod-validator':
         specifier: ^0.9.0
-        version: 0.9.0(hono@4.13.7)(zod@4.4.3)
+        version: 0.9.0(hono@4.13.13)(zod@4.4.3)
       '@repo/schema':
         specifier: workspace:*
         version: link:../../packages/schema
@@ -236,7 +236,7 @@ importers:
         version: 0.45.2(@cloudflare/workers-types@5.20260811.1)(@libsql/client@0.17.4)(kysely@0.29.5)
       hono:
         specifier: 'catalog:'
-        version: 4.13.7
+        version: 4.13.13
       neverthrow:
         specifier: ^8.2.0
         version: 8.2.0
@@ -418,7 +418,7 @@ importers:
     dependencies:
       hono:
         specifier: 'catalog:'
-        version: 4.13.7
+        version: 4.13.13
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^5.20260811.1
@@ -5516,8 +5516,8 @@ packages:
   hoist-non-react-statics@3.3.2:
     resolution: {integrity: sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==}
 
-  hono@4.13.1:
-    resolution: {integrity: sha512-kdJoFVv2xmayw6cY09H7AbMJMt8Jn5jdlEdXsP7AGBdF2DIptVlKlOLKXP41yPip4/a3yQPv9gVcJYI8YY04dw==}
+  hono@4.13.13:
+    resolution: {integrity: sha512-CQ46U0ZkAGmbT/4UxdzzGJpacP2IeKgY4a5/tOI9AABbpOMfK739wfDXmv1usCk+3RkKj1hQy4/fjhiwa2xlrA==}
     engines: {node: '>=16.9.0'}
 
   hono@4.13.7:
@@ -7534,6 +7534,9 @@ packages:
 
   workers-ai-provider@4.0.0:
     resolution: {integrity: sha512-FkhwMP1EP/MKXR8Jv1o7wLVKfTqu0h/PUaEmhZ7gyDiioib5Wsh3oPAKhG+7+SWfU3roTDHaEWlJpkJjpXu+fQ==}
+    deprecated: |-
+      Deprecated. Use createAI from agents/models/ai-sdk, or
+       ai-search-provider for AI Search: https://developers.cloudflare.com/agents/models/ai-sdk/
     peerDependencies:
       '@ai-sdk/anthropic': ^4.0.0
       '@ai-sdk/google': ^4.0.0
@@ -9952,13 +9955,13 @@ snapshots:
 
   '@fontsource-variable/geist@5.3.0': {}
 
-  '@hono/node-server@2.1.0(hono@4.13.1)':
-    dependencies:
-      hono: 4.13.1
-
-  '@hono/zod-validator@0.9.0(hono@4.13.7)(zod@4.4.3)':
+  '@hono/node-server@2.1.0(hono@4.13.7)':
     dependencies:
       hono: 4.13.7
+
+  '@hono/zod-validator@0.9.0(hono@4.13.13)(zod@4.4.3)':
+    dependencies:
+      hono: 4.13.13
       zod: 4.4.3
 
   '@img/colour@1.1.0': {}
@@ -10199,7 +10202,7 @@ snapshots:
 
   '@modelcontextprotocol/sdk@1.30.0(@cfworker/json-schema@4.1.1)(supports-color@10.2.2)(zod@3.25.76)':
     dependencies:
-      '@hono/node-server': 2.1.0(hono@4.13.1)
+      '@hono/node-server': 2.1.0(hono@4.13.7)
       ajv: 8.20.0
       ajv-formats: 3.0.1(ajv@8.20.0)
       content-type: 1.0.5
@@ -10209,7 +10212,7 @@ snapshots:
       eventsource-parser: 3.1.1
       express: 5.2.1(supports-color@10.2.2)
       express-rate-limit: 8.6.2(express@5.2.1(supports-color@10.2.2))(supports-color@10.2.2)
-      hono: 4.13.1
+      hono: 4.13.7
       jose: 6.2.8
       json-schema-typed: 8.0.2
       pkce-challenge: 5.0.1
@@ -10223,7 +10226,7 @@ snapshots:
 
   '@modelcontextprotocol/sdk@1.30.0(@cfworker/json-schema@4.1.1)(supports-color@10.2.2)(zod@4.4.3)':
     dependencies:
-      '@hono/node-server': 2.1.0(hono@4.13.1)
+      '@hono/node-server': 2.1.0(hono@4.13.7)
       ajv: 8.20.0
       ajv-formats: 3.0.1(ajv@8.20.0)
       content-type: 1.0.5
@@ -10233,7 +10236,7 @@ snapshots:
       eventsource-parser: 3.1.1
       express: 5.2.1(supports-color@10.2.2)
       express-rate-limit: 8.6.2(express@5.2.1(supports-color@10.2.2))(supports-color@10.2.2)
-      hono: 4.13.1
+      hono: 4.13.7
       jose: 6.2.8
       json-schema-typed: 8.0.2
       pkce-challenge: 5.0.1
@@ -13797,7 +13800,7 @@ snapshots:
     dependencies:
       react-is: 16.13.1
 
-  hono@4.13.1: {}
+  hono@4.13.13: {}
 
   hono@4.13.7: {}
 
