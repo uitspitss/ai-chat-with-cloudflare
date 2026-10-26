@@ -1,4 +1,11 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>uitspitss/renovate-config"]
+  "extends": ["github>uitspitss/renovate-config"],
+  "packageRules": [
+    {
+      "description": "ai は @ai-sdk/provider を厳密な版で固定している。provider を単独で上げると型が二重になり typecheck が落ちるので、AI SDK 周りは同時に上げる",
+      "matchPackageNames": ["ai", "@ai-sdk/**", "workers-ai-provider"],
+      "groupName": "ai-sdk"
+    }
+  ]
 }
