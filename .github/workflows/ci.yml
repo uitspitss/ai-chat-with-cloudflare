@@ -9,8 +9,8 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: jdx/mise-action@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: jdx/mise-action@c37c93293d6b742fc901e1406b8f764f6fb19dac # v2
       - run: nci
       # @repo/web の vitest は storybook プロジェクトを browser mode
       # （@vitest/browser-playwright）で回すので、e2e ジョブとは別にここでも
@@ -38,8 +38,8 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: jdx/mise-action@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: jdx/mise-action@c37c93293d6b742fc901e1406b8f764f6fb19dac # v2
       - run: nci
       # ci ジョブと同じ理由で --with-deps を付けない（そちらのコメント参照）。
       # ここは Desktop Chrome（フル chromium）なので ci の headless shell より
@@ -52,7 +52,7 @@ jobs:
       - name: Prepare dev vars
         run: echo "BETTER_AUTH_SECRET=$(openssl rand -base64 32)" > apps/server/.dev.vars
       - run: nr test:e2e
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: ${{ !cancelled() }}
         with:
           name: playwright-report
@@ -72,7 +72,7 @@ jobs:
       group: deploy-production
       cancel-in-progress: false
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       # wrangler.jsonc の vars は deploy のたびに本番へ**上書き**される。
       # README のセットアップ（database_id と本番オリジン）を踏まずに main へ
@@ -90,12 +90,12 @@ jobs:
             exit 1
           fi
 
-      - uses: jdx/mise-action@v2
+      - uses: jdx/mise-action@c37c93293d6b742fc901e1406b8f764f6fb19dac # v2
       - run: nci
 
       # 新しいコードが古いスキーマに当たらないよう、デプロイ前に流す
       - name: Apply D1 migrations
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd # v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -106,7 +106,7 @@ jobs:
       # （wrangler.jsonc の assets.directory が ../web/dist を指すため）
       - run: na exec turbo run build --filter=@repo/server
 
-      - uses: cloudflare/wrangler-action@v3
+      - uses: cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd # v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
