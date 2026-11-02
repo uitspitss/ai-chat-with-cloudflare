@@ -33,7 +33,7 @@
     "@repo/schema": "workspace:*",
     "agents": "catalog:",
     "ai": "catalog:",
-    "better-auth": "~1.6.30",
+    "better-auth": "~1.7.0",
     "drizzle-orm": "catalog:",
     "hono": "catalog:",
     "neverthrow": "^8.2.0",

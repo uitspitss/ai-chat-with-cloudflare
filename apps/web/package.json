@@ -24,7 +24,7 @@
     "@tanstack/react-router": "^1.170.25",
     "agents": "catalog:",
     "ai": "catalog:",
-    "better-auth": "~1.6.30",
+    "better-auth": "~1.7.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.31.0",
