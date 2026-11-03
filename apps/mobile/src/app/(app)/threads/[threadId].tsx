@@ -65,7 +65,8 @@ function Chat({ threadId }: { threadId: string }) {
       if (retriedAfterAuthFailure.current) return false;
 
       retriedAfterAuthFailure.current = true;
-      refreshCookie();
+      // この関数は同期なので待てない。読み直しは再接続の遅延（backoff）の間に終わる。
+      void refreshCookie();
       return true;
     },
   });
