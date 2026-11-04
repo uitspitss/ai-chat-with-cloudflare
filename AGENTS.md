@@ -305,9 +305,15 @@ grep -rn 'env\.BUCKET\|drizzle(' presentation/ index.ts                # 何も�
 
 ### バージョンを `^` で入れてはいけないもの
 
-- **`better-auth` / `@better-auth/expo` は `~`。** `^1.6.30` は 1.7.0 を掴み、
-  1.7 は `account` テーブルに `issuer` 列を足すので、D1 のマイグレーション無しでは
-  サインアップが 500 になる。上げるときはスキーマ変更とセットで行う
+- **`better-auth` / `@better-auth/expo` は `~`。** minor が上がると DB スキーマや
+  クライアント API が変わることがあるので、minor の更新は人が見てから入れる。
+  実例: 1.7 で `getCookie()` が非同期になり `apps/mobile/src/lib/auth.ts` の追従が要った
+- **1.7.0〜1.7.2 には上げない。** この3版だけ `account` に必須の `issuer` 列を要求し、
+  D1 のマイグレーション無しではサインアップが 500 になる。1.7.3 で要件ごと消えたので、
+  **1.6 → 1.7.3 以降なら `account` のスキーマ変更は要らない**
+  （https://www.better-auth.com/docs/guides/1-7-upgrade-guide ）。
+  ただしこれは `expo()` プラグインしか使っていない今の構成の話で、プラグインを足すと
+  そのプラグイン側のテーブル・列が要る
 - **`lightningcss` は `pnpm-workspace.yaml` の `overrides` で 1.30.1 に固定。**
   react-native-css（NativeWind v5）が 1.32 / 1.33 で Tailwind v4 の出力を読み戻せず、
   Metro の bundling が「failed to deserialize ... Specifier」で落ちる
