@@ -17,8 +17,8 @@ export const { signIn, signUp, useSession } = authClient;
  * cookie の写し。**WebSocket のコンストラクタは `await` できない**ので、
  * 同期で読める場所に置いておく必要がある（`lib/cookie-websocket.ts`）。
  *
- * better-auth 1.6 の `getCookie()` は同期だが、1.7 で非同期になる。
- * そのときに直すのは**このファイルだけ**で済むようにここへ閉じてある。
+ * better-auth 1.7 から `getCookie()` は非同期（SecureStore を `getItemAsync` で読む）。
+ * 読み直しは `refreshCookie()` が非同期で行い、`authHeaders()` は写しを同期で返す。
  */
 let cachedCookie = "";
 
@@ -31,12 +31,12 @@ export function authHeaders(): { Cookie: string } {
   return { Cookie: cachedCookie };
 }
 
-export function refreshCookie(): string {
-  cachedCookie = authClient.getCookie();
+export async function refreshCookie(): Promise<string> {
+  cachedCookie = await authClient.getCookie();
   return cachedCookie;
 }
 
-refreshCookie();
+void refreshCookie();
 
 /**
  * **`authClient.signOut` を直に export しない。** 写しを捨てないと、サインアウト後も
@@ -45,11 +45,11 @@ refreshCookie();
  */
 export async function signOut() {
   await authClient.signOut();
-  refreshCookie();
+  await refreshCookie();
 }
 
 // サーバー側の cookieCache は 5 分で切れる。アプリを長時間バックグラウンドに
 // 置いた後の復帰で古い cookie を掴まないよう、戻ってきたら読み直す。
 AppState.addEventListener("change", (state) => {
-  if (state === "active") refreshCookie();
+  if (state === "active") void refreshCookie();
 });

@@ -40,7 +40,7 @@ export default function SignInScreen() {
 
     // SecureStore に入った新しい cookie を写しに反映する。
     // これを忘れると WebSocket だけ古い cookie で 403 になる。
-    refreshCookie();
+    await refreshCookie();
   }
 
   // **命令的に router.replace("/") しない。** それだと `useSession()` の更新より
