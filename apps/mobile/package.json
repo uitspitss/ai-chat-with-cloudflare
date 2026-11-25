@@ -37,7 +37,7 @@
     "expo-splash-screen": "~57.0.6",
     "expo-system-ui": "~57.0.2",
     "expo-web-browser": "~57.0.2",
-    "nativewind": "5.0.0-preview.4",
+    "nativewind": "5.0.0-rc.1",
     "react": "19.2.3",
     "react-native": "0.86.2",
     "react-native-css": "^3.0.7",
