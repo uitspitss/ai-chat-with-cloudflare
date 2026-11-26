@@ -6,6 +6,11 @@
       "description": "ai は @ai-sdk/provider を厳密な版で固定している。provider を単独で上げると型が二重になり typecheck が落ちるので、AI SDK 周りは同時に上げる",
       "matchPackageNames": ["ai", "@ai-sdk/**", "workers-ai-provider"],
       "groupName": "ai-sdk"
+    },
+    {
+      "description": "@cloudflare/ai-chat は agents の内部 API（agents/chat, agents/sessions）に依存している。agents だけ上げると ai-chat が読む export が消えてビルドが落ち、ai-chat だけ上げると agents/sessions が解決できない。必ず同時に上げる",
+      "matchPackageNames": ["agents", "@cloudflare/ai-chat"],
+      "groupName": "cloudflare-agents"
     }
   ]
 }
