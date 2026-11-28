@@ -34,10 +34,10 @@ catalog:
   # 揃えないとブラウザバイナリが 2 世代入る（setup-dev:e2e）
   "@playwright/test": ^1.62.1
   playwright: ^1.62.1
-  agents: ^0.20.1
+  agents: ^0.34.0
   # pnpm 11 は既定で公開 24 時間以内の版を弾く。^7.0.0 にして解決を pnpm に任せる
   ai: ^7.0.62
-  "@cloudflare/ai-chat": ^0.10.1
+  "@cloudflare/ai-chat": ^0.12.0
   hono: ^4.13.5
   knip: ^6.32.2
   lefthook: ^2.1.10
